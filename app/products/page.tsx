@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useCart } from '@/contexts/cart-context';
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
 import PageHeader from '@/components/layout/page-header';
@@ -16,6 +18,8 @@ interface Product {
 }
 
 export default function Products() {
+  const router = useRouter();
+  const { addItem } = useCart();
   const [activeCategory, setActiveCategory] = useState('전체');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
@@ -80,6 +84,16 @@ export default function Products() {
     activeCategory === '전체'
       ? products
       : products.filter((p) => p.category === activeCategory);
+
+  const handleSelectProduct = (product: Product) => {
+    addItem({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      description: product.description,
+    });
+    router.push('/checkout');
+  };
 
   return (
     <>
@@ -147,7 +161,10 @@ export default function Products() {
                       </li>
                     ))}
                   </ul>
-                  <button className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                  <button
+                    onClick={() => handleSelectProduct(product)}
+                    className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
                     선택하기
                   </button>
                 </div>

@@ -5,13 +5,18 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
-import AuthButtons from '@/components/auth/auth-buttons';
 import UserDropdown from '@/components/auth/user-dropdown';
+import Modal from '@/components/ui/modal';
+import LoginForm from '@/components/auth/login-form';
+import SignupForm from '@/components/auth/signup-form';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // 데모용 로그인 상태
-  const [userName, setUserName] = useState('홍길동');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userName, setUserName] = useState('');
+  const [userEmail, setUserEmail] = useState('');
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
   const pathname = usePathname();
 
   const navItems = [
@@ -19,8 +24,41 @@ export default function Header() {
     { name: '상품', href: '/products' },
   ];
 
+  const loggedInNavItems = [
+    { name: '회사소개', href: '/about' },
+    { name: '상품', href: '/products' },
+    { name: '마이페이지', href: '/mypage' },
+  ];
+
+  const handleLoginSuccess = (userData: { email: string; name: string }) => {
+    setIsLoggedIn(true);
+    setUserName(userData.name);
+    setUserEmail(userData.email);
+    setIsLoginModalOpen(false);
+  };
+
+  const handleSignupSuccess = (userData: { email: string; name: string }) => {
+    setIsLoggedIn(true);
+    setUserName(userData.name);
+    setUserEmail(userData.email);
+    setIsSignupModalOpen(false);
+  };
+
   const handleLogout = () => {
     setIsLoggedIn(false);
+    setUserName('');
+    setUserEmail('');
+    localStorage.removeItem('userData');
+  };
+
+  const switchToSignup = () => {
+    setIsLoginModalOpen(false);
+    setIsSignupModalOpen(true);
+  };
+
+  const switchToLogin = () => {
+    setIsSignupModalOpen(false);
+    setIsLoginModalOpen(true);
   };
 
   return (
@@ -41,7 +79,7 @@ export default function Header() {
 
           {/* Center Navigation */}
           <div className="hidden md:flex items-center space-x-2 absolute left-1/2 transform -translate-x-1/2">
-            {navItems.map((item) => {
+            {(isLoggedIn ? loggedInNavItems : navItems).map((item) => {
               const isActive = pathname === item.href;
               return (
                 <Link
@@ -64,7 +102,20 @@ export default function Header() {
             {isLoggedIn ? (
               <UserDropdown userName={userName} onLogout={handleLogout} />
             ) : (
-              <AuthButtons />
+              <>
+                <button
+                  onClick={() => setIsLoginModalOpen(true)}
+                  className="text-gray-700 hover:text-blue-600 font-medium transition-colors"
+                >
+                  로그인
+                </button>
+                <button
+                  onClick={() => setIsSignupModalOpen(true)}
+                  className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 text-gray-900 px-4 py-2 rounded-lg font-medium transition-all"
+                >
+                  회원가입
+                </button>
+              </>
             )}
           </div>
 
@@ -82,7 +133,7 @@ export default function Header() {
         {isMenuOpen && (
           <div className="md:hidden pb-4 animate-fade-in">
             <div className="backdrop-blur-xl bg-white/95 border border-white/20 shadow-2xl rounded-lg p-4 space-y-2">
-              {navItems.map((item) => {
+              {(isLoggedIn ? loggedInNavItems : navItems).map((item) => {
                 const isActive = pathname === item.href;
                 return (
                   <Link
@@ -131,26 +182,54 @@ export default function Header() {
                 </>
               ) : (
                 <>
-                  <Link
-                    href="/login"
-                    className="block px-4 py-3 rounded-lg font-medium text-gray-900 hover:text-blue-600 hover:bg-white/40 transition-colors duration-200"
-                    onClick={() => setIsMenuOpen(false)}
+                  <button
+                    onClick={() => {
+                      setIsLoginModalOpen(true);
+                      setIsMenuOpen(false);
+                    }}
+                    className="block w-full text-left px-4 py-3 rounded-lg font-medium text-gray-900 hover:text-blue-600 hover:bg-white/40 transition-colors duration-200"
                   >
                     로그인
-                  </Link>
-                  <Link
-                    href="/signup"
-                    className="block px-4 py-3 rounded-lg font-medium bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 text-gray-900 transition-all text-center"
-                    onClick={() => setIsMenuOpen(false)}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsSignupModalOpen(true);
+                      setIsMenuOpen(false);
+                    }}
+                    className="block w-full px-4 py-3 rounded-lg font-medium bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 text-gray-900 transition-all text-center"
                   >
                     회원가입
-                  </Link>
+                  </button>
                 </>
               )}
             </div>
           </div>
         )}
       </nav>
+
+      {/* Login Modal */}
+      <Modal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        title="로그인"
+      >
+        <LoginForm
+          onSuccess={handleLoginSuccess}
+          onSwitchToSignup={switchToSignup}
+        />
+      </Modal>
+
+      {/* Signup Modal */}
+      <Modal
+        isOpen={isSignupModalOpen}
+        onClose={() => setIsSignupModalOpen(false)}
+        title="회원가입"
+      >
+        <SignupForm
+          onSuccess={handleSignupSuccess}
+          onSwitchToLogin={switchToLogin}
+        />
+      </Modal>
     </header>
   );
 }
