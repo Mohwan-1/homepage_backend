@@ -7,7 +7,7 @@ import { Home, User, ShoppingBag, Settings } from 'lucide-react';
 interface MenuItem {
   title: string;
   href: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: any;
 }
 
 const sidebarItems: MenuItem[] = [

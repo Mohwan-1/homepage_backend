@@ -20,7 +20,8 @@
       "Bash(dir:*)",
       "Bash(mkdir:*)",
       "Bash(node:*)",
-      "Bash(vercel:*)"
+      "Bash(vercel:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []
