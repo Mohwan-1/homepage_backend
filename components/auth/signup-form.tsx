@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, User, Phone } from 'lucide-react';
+import { useAuth } from '@/contexts/auth-context';
 
 interface SignupFormProps {
   onSuccess: (userData: { email: string; name: string }) => void;
@@ -9,6 +10,7 @@ interface SignupFormProps {
 }
 
 export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormProps) {
+  const { signUp, signInWithGoogle } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -52,12 +54,7 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
     setIsLoading(true);
 
     try {
-      // TODO: Firebase 회원가입 연동
-      // const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-      // await updateProfile(userCredential.user, { displayName: formData.name });
-
-      // 임시 데모 로직
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await signUp(formData.email, formData.password, formData.name);
 
       onSuccess({ email: formData.email, name: formData.name });
     } catch (err: any) {
@@ -228,8 +225,22 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
         {/* Google Signup */}
         <button
           type="button"
-          onClick={() => alert('Google 회원가입은 Firebase 연동 후 사용 가능합니다.')}
-          className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          onClick={async () => {
+            try {
+              setIsLoading(true);
+              setError('');
+
+              // 리다이렉트 방식 - 페이지가 이동하므로 onSuccess 호출 불필요
+              await signInWithGoogle();
+            } catch (err: any) {
+              if (err.message) {
+                setError(err.message);
+              }
+              setIsLoading(false);
+            }
+          }}
+          disabled={isLoading}
+          className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path

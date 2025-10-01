@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { useAuth } from '@/contexts/auth-context';
 
 interface LoginFormProps {
   onSuccess: (userData: { email: string; name: string }) => void;
@@ -9,6 +10,7 @@ interface LoginFormProps {
 }
 
 export default function LoginForm({ onSuccess, onSwitchToSignup }: LoginFormProps) {
+  const { signIn, signInWithGoogle } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -21,36 +23,10 @@ export default function LoginForm({ onSuccess, onSwitchToSignup }: LoginFormProp
     setIsLoading(true);
 
     try {
-      // TODO: Firebase 로그인 연동
-      // const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      await signIn(email, password);
 
-      // 임시 데모 로직
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      if (email && password) {
-        // 관리자 계정 체크
-        let userData;
-        if (email === 'admin@vibe.com' && password === 'admin123') {
-          userData = {
-            email,
-            name: '관리자',
-            role: 'admin'
-          };
-        } else {
-          userData = {
-            email,
-            name: '사용자',
-            role: 'user'
-          };
-        }
-
-        // localStorage에 저장 (관리자 페이지 접근용)
-        localStorage.setItem('userData', JSON.stringify(userData));
-
-        onSuccess(userData);
-      } else {
-        throw new Error('이메일과 비밀번호를 입력해주세요.');
-      }
+      // 로그인 성공
+      onSuccess({ email, name: email.split('@')[0] });
     } catch (err: any) {
       setError(err.message || '로그인에 실패했습니다.');
     } finally {
@@ -60,13 +36,6 @@ export default function LoginForm({ onSuccess, onSwitchToSignup }: LoginFormProp
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Demo Account Info */}
-      <div className="p-3 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 text-sm">
-        <p className="font-medium mb-1">테스트 계정</p>
-        <p className="text-xs">관리자: admin@vibe.com / admin123</p>
-        <p className="text-xs">일반: any@email.com / any password</p>
-      </div>
-
       {error && (
         <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
           {error}
@@ -152,8 +121,22 @@ export default function LoginForm({ onSuccess, onSwitchToSignup }: LoginFormProp
         {/* Google Login */}
         <button
           type="button"
-          onClick={() => alert('Google 로그인은 Firebase 연동 후 사용 가능합니다.')}
-          className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          onClick={async () => {
+            try {
+              setIsLoading(true);
+              setError('');
+
+              // 리다이렉트 방식 - 페이지가 이동하므로 onSuccess 호출 불필요
+              await signInWithGoogle();
+            } catch (err: any) {
+              if (err.message) {
+                setError(err.message);
+              }
+              setIsLoading(false);
+            }
+          }}
+          disabled={isLoading}
+          className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path

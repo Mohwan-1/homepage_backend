@@ -3,39 +3,18 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { User, ShoppingBag, CreditCard, Settings, Package, Clock, CheckCircle } from 'lucide-react';
+import { useAuth } from '@/contexts/auth-context';
+import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
-interface UserData {
-  email: string;
-  name: string;
-  role: string;
+interface Order {
+  id: string;
+  orderId: string;
+  totalAmount: number;
+  status: string;
+  createdAt: any;
+  items: any[];
 }
-
-const recentOrders = [
-  {
-    id: '1',
-    orderNumber: 'ORD-20240115-001',
-    date: '2024-01-15',
-    status: 'delivered',
-    items: 2,
-    amount: 125000
-  },
-  {
-    id: '2',
-    orderNumber: 'ORD-20240110-002',
-    date: '2024-01-10',
-    status: 'shipping',
-    items: 1,
-    amount: 89000
-  },
-  {
-    id: '3',
-    orderNumber: 'ORD-20240105-003',
-    date: '2024-01-05',
-    status: 'delivered',
-    items: 3,
-    amount: 256000
-  }
-];
 
 const quickActions = [
   { title: '내 정보 관리', href: '/mypage/profile', icon: User, color: 'blue' },
@@ -45,14 +24,65 @@ const quickActions = [
 ];
 
 export default function MypageDashboard() {
-  const [userData, setUserData] = useState<UserData | null>(null);
+  const { user, userData } = useAuth();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [stats, setStats] = useState({
+    totalOrders: 0,
+    points: 0,
+    shippingOrders: 0
+  });
 
   useEffect(() => {
-    const userDataStr = localStorage.getItem('userData');
-    if (userDataStr) {
-      setUserData(JSON.parse(userDataStr));
+    if (user) {
+      loadOrders();
     }
-  }, []);
+  }, [user]);
+
+  const loadOrders = async () => {
+    if (!user) return;
+
+    try {
+      // 최근 주문 3개 가져오기
+      const ordersQuery = query(
+        collection(db, 'orders'),
+        where('userId', '==', user.uid),
+        orderBy('createdAt', 'desc'),
+        limit(3)
+      );
+
+      const querySnapshot = await getDocs(ordersQuery);
+      const ordersData: Order[] = [];
+
+      querySnapshot.forEach((doc) => {
+        ordersData.push({
+          id: doc.id,
+          ...doc.data(),
+        } as Order);
+      });
+
+      setOrders(ordersData);
+
+      // 전체 주문 수 계산
+      const allOrdersQuery = query(
+        collection(db, 'orders'),
+        where('userId', '==', user.uid)
+      );
+      const allOrdersSnapshot = await getDocs(allOrdersQuery);
+
+      const totalOrders = allOrdersSnapshot.size;
+      const shippingOrders = allOrdersSnapshot.docs.filter(
+        doc => doc.data().status === 'shipping'
+      ).length;
+
+      setStats({
+        totalOrders,
+        points: 2500, // TODO: 포인트 시스템 구현 시 실제 데이터로 변경
+        shippingOrders
+      });
+    } catch (error) {
+      console.error('Failed to load orders:', error);
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -74,11 +104,13 @@ export default function MypageDashboard() {
             <User size={40} className="text-blue-600" />
           </div>
           <div className="flex-1">
-            <h2 className="text-2xl font-bold text-gray-800">{userData?.name || '사용자'}</h2>
-            <p className="text-gray-600">{userData?.email}</p>
+            <h2 className="text-2xl font-bold text-gray-800">{userData?.name || user?.email || '사용자'}</h2>
+            <p className="text-gray-600">{user?.email}</p>
             <div className="mt-2 flex items-center gap-4 text-sm text-gray-500">
-              <span>가입일: 2024-01-01</span>
-              <span className="px-2 py-1 bg-blue-100 text-blue-600 rounded">일반 회원</span>
+              <span>가입일: {userData?.createdAt ? new Date(userData.createdAt).toLocaleDateString('ko-KR') : '-'}</span>
+              <span className="px-2 py-1 bg-blue-100 text-blue-600 rounded">
+                {userData?.role === 'admin' ? '관리자' : '일반 회원'}
+              </span>
             </div>
           </div>
         </div>
@@ -90,7 +122,7 @@ export default function MypageDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">총 주문</p>
-              <p className="text-2xl font-bold text-gray-800 mt-1">12건</p>
+              <p className="text-2xl font-bold text-gray-800 mt-1">{stats.totalOrders}건</p>
             </div>
             <div className="p-3 bg-blue-100 rounded-lg">
               <ShoppingBag size={24} className="text-blue-600" />
@@ -102,7 +134,7 @@ export default function MypageDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">포인트</p>
-              <p className="text-2xl font-bold text-gray-800 mt-1">2,500P</p>
+              <p className="text-2xl font-bold text-gray-800 mt-1">{stats.points.toLocaleString()}P</p>
             </div>
             <div className="p-3 bg-purple-100 rounded-lg">
               <CreditCard size={24} className="text-purple-600" />
@@ -114,7 +146,7 @@ export default function MypageDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">배송중</p>
-              <p className="text-2xl font-bold text-gray-800 mt-1">1건</p>
+              <p className="text-2xl font-bold text-gray-800 mt-1">{stats.shippingOrders}건</p>
             </div>
             <div className="p-3 bg-green-100 rounded-lg">
               <Package size={24} className="text-green-600" />
@@ -132,37 +164,52 @@ export default function MypageDashboard() {
           </Link>
         </div>
         <div className="divide-y divide-gray-200">
-          {recentOrders.map((order) => {
-            const statusBadge = getStatusBadge(order.status);
-            return (
-              <div key={order.id} className="p-6 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <p className="font-medium text-gray-800">{order.orderNumber}</p>
-                      <span className={`px-2 py-1 text-xs font-medium rounded ${statusBadge.color}`}>
-                        {statusBadge.label}
-                      </span>
+          {orders.length === 0 ? (
+            <div className="p-12 text-center text-gray-500">
+              <Package size={48} className="mx-auto mb-4 text-gray-300" />
+              <p>주문 내역이 없습니다.</p>
+              <Link
+                href="/products"
+                className="inline-block mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                상품 둘러보기
+              </Link>
+            </div>
+          ) : (
+            orders.map((order) => {
+              const statusBadge = getStatusBadge(order.status);
+              const orderDate = order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString('ko-KR') : '-';
+
+              return (
+                <div key={order.id} className="p-6 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <p className="font-medium text-gray-800">{order.orderId}</p>
+                        <span className={`px-2 py-1 text-xs font-medium rounded ${statusBadge.color}`}>
+                          {statusBadge.label}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-4 text-sm text-gray-600">
+                        <span className="flex items-center gap-1">
+                          <Clock size={14} />
+                          {orderDate}
+                        </span>
+                        <span>{order.items?.length || 0}개 상품</span>
+                        <span className="font-medium text-gray-800">₩{order.totalAmount.toLocaleString()}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-gray-600">
-                      <span className="flex items-center gap-1">
-                        <Clock size={14} />
-                        {order.date}
-                      </span>
-                      <span>{order.items}개 상품</span>
-                      <span className="font-medium text-gray-800">₩{order.amount.toLocaleString()}</span>
-                    </div>
+                    <Link
+                      href={`/mypage/orders`}
+                      className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+                    >
+                      상세보기
+                    </Link>
                   </div>
-                  <Link
-                    href={`/mypage/orders/${order.id}`}
-                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
-                  >
-                    상세보기
-                  </Link>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
       </div>
 

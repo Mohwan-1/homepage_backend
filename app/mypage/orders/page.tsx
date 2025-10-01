@@ -1,8 +1,11 @@
 'use client';
 
-import { useState } from 'react';
-import { Package, Clock, ChevronRight } from 'lucide-react';
-import Image from 'next/image';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Package, Clock, ChevronRight, ArrowLeft, Home } from 'lucide-react';
+import { useAuth } from '@/contexts/auth-context';
+import { collection, query, where, orderBy, getDocs, Timestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 interface OrderItem {
   productId: string;
@@ -14,82 +17,67 @@ interface OrderItem {
 
 interface Order {
   id: string;
-  orderNumber: string;
-  orderDate: string;
+  orderId: string;
+  createdAt: any;
   status: 'pending' | 'paid' | 'shipping' | 'delivered' | 'cancelled';
   items: OrderItem[];
   totalAmount: number;
 }
 
-const mockOrders: Order[] = [
-  {
-    id: '1',
-    orderNumber: 'ORD-20240115-001',
-    orderDate: '2024-01-15',
-    status: 'delivered',
-    items: [
-      {
-        productId: '1',
-        productName: '스마트폰 케이스',
-        productImage: '/products/case.jpg',
-        quantity: 1,
-        price: 29000
-      },
-      {
-        productId: '2',
-        productName: '무선 이어폰',
-        productImage: '/products/earphone.jpg',
-        quantity: 1,
-        price: 89000
-      }
-    ],
-    totalAmount: 125000
-  },
-  {
-    id: '2',
-    orderNumber: 'ORD-20240110-002',
-    orderDate: '2024-01-10',
-    status: 'shipping',
-    items: [
-      {
-        productId: '3',
-        productName: '노트북 가방',
-        productImage: '/products/bag.jpg',
-        quantity: 1,
-        price: 89000
-      }
-    ],
-    totalAmount: 89000
-  },
-  {
-    id: '3',
-    orderNumber: 'ORD-20240105-003',
-    orderDate: '2024-01-05',
-    status: 'delivered',
-    items: [
-      {
-        productId: '4',
-        productName: '마우스',
-        productImage: '/products/mouse.jpg',
-        quantity: 2,
-        price: 35000
-      },
-      {
-        productId: '5',
-        productName: '키보드',
-        productImage: '/products/keyboard.jpg',
-        quantity: 1,
-        price: 125000
-      }
-    ],
-    totalAmount: 256000
-  }
-];
-
 export default function OrdersPage() {
+  const router = useRouter();
+  const { user } = useAuth();
   const [period, setPeriod] = useState('3months');
   const [statusFilter, setStatusFilter] = useState<'all' | 'paid' | 'shipping' | 'delivered' | 'cancelled'>('all');
-  const [orders] = useState<Order[]>(mockOrders);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      loadOrders();
+    }
+  }, [user, period]);
+
+  const loadOrders = async () => {
+    if (!user) return;
+
+    setIsLoading(true);
+    try {
+      // Calculate date range based on period
+      const now = new Date();
+      const periodDays = {
+        '1month': 30,
+        '3months': 90,
+        '6months': 180,
+        '1year': 365
+      }[period] || 90;
+
+      const startDate = new Date(now.getTime() - periodDays * 24 * 60 * 60 * 1000);
+
+      const ordersQuery = query(
+        collection(db, 'orders'),
+        where('userId', '==', user.uid),
+        where('createdAt', '>=', Timestamp.fromDate(startDate)),
+        orderBy('createdAt', 'desc')
+      );
+
+      const querySnapshot = await getDocs(ordersQuery);
+      const ordersData: Order[] = [];
+
+      querySnapshot.forEach((doc) => {
+        ordersData.push({
+          id: doc.id,
+          ...doc.data(),
+        } as Order);
+      });
+
+      setOrders(ordersData);
+    } catch (error) {
+      console.error('Failed to load orders:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const filteredOrders = orders.filter(order => {
     if (statusFilter === 'all') return true;
@@ -110,6 +98,24 @@ export default function OrdersPage() {
 
   return (
     <div className="space-y-6">
+      {/* Navigation Buttons */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          <ArrowLeft size={20} />
+          <span>뒤로가기</span>
+        </button>
+        <button
+          onClick={() => router.push('/')}
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          <Home size={20} />
+          <span>홈으로</span>
+        </button>
+      </div>
+
       <div>
         <h1 className="text-2xl font-bold text-gray-800">주문내역</h1>
         <p className="text-gray-600 mt-1">주문한 상품의 배송 상태를 확인할 수 있습니다</p>
@@ -152,7 +158,12 @@ export default function OrdersPage() {
       </div>
 
       {/* Orders List */}
-      {filteredOrders.length === 0 ? (
+      {isLoading ? (
+        <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-12 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="text-gray-600 mt-4">주문 내역을 불러오는 중...</p>
+        </div>
+      ) : filteredOrders.length === 0 ? (
         <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-12 text-center">
           <Package size={48} className="mx-auto text-gray-400 mb-4" />
           <p className="text-gray-600">주문 내역이 없습니다</p>
@@ -161,6 +172,8 @@ export default function OrdersPage() {
         <div className="space-y-4">
           {filteredOrders.map((order) => {
             const statusBadge = getStatusBadge(order.status);
+            const orderDate = order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString('ko-KR') : '-';
+
             return (
               <div key={order.id} className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
                 {/* Order Header */}
@@ -169,9 +182,9 @@ export default function OrdersPage() {
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <Clock size={16} />
-                        <span>{order.orderDate}</span>
+                        <span>{orderDate}</span>
                       </div>
-                      <span className="text-sm font-medium text-gray-800">{order.orderNumber}</span>
+                      <span className="text-sm font-medium text-gray-800">{order.orderId}</span>
                       <span className={`px-2 py-1 text-xs font-medium rounded ${statusBadge.color}`}>
                         {statusBadge.label}
                       </span>

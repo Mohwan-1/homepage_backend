@@ -25,7 +25,7 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed top-0 left-0 right-0 bottom-0 z-[9999] flex items-center justify-center p-4 min-h-screen">
+    <div className="fixed top-0 left-0 right-0 bottom-0 z-[100] flex items-center justify-center p-4 min-h-screen">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/70 backdrop-blur-md"
@@ -33,7 +33,7 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
       />
 
       {/* Modal Container - Ensures vertical centering */}
-      <div className="relative z-[10000] w-full max-w-md my-auto">
+      <div className="relative z-[110] w-full max-w-md my-auto">
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0">

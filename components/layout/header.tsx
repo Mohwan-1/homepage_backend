@@ -5,16 +5,15 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
+import { useAuth } from '@/contexts/auth-context';
 import UserDropdown from '@/components/auth/user-dropdown';
 import Modal from '@/components/ui/modal';
 import LoginForm from '@/components/auth/login-form';
 import SignupForm from '@/components/auth/signup-form';
 
 export default function Header() {
+  const { user, userData, signOut: firebaseSignOut } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userName, setUserName] = useState('');
-  const [userEmail, setUserEmail] = useState('');
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
   const pathname = usePathname();
@@ -22,33 +21,32 @@ export default function Header() {
   const navItems = [
     { name: '회사소개', href: '/about' },
     { name: '상품', href: '/products' },
+    { name: '후기', href: '/reviews' },
   ];
 
   const loggedInNavItems = [
     { name: '회사소개', href: '/about' },
     { name: '상품', href: '/products' },
+    { name: '후기', href: '/reviews' },
     { name: '마이페이지', href: '/mypage' },
   ];
 
-  const handleLoginSuccess = (userData: { email: string; name: string }) => {
-    setIsLoggedIn(true);
-    setUserName(userData.name);
-    setUserEmail(userData.email);
+  const handleLoginSuccess = () => {
     setIsLoginModalOpen(false);
   };
 
-  const handleSignupSuccess = (userData: { email: string; name: string }) => {
-    setIsLoggedIn(true);
-    setUserName(userData.name);
-    setUserEmail(userData.email);
+  const handleSignupSuccess = () => {
     setIsSignupModalOpen(false);
   };
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setUserName('');
-    setUserEmail('');
-    localStorage.removeItem('userData');
+  const handleLogout = async () => {
+    try {
+      await firebaseSignOut();
+      localStorage.removeItem('userData');
+      localStorage.removeItem('cart');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
   const switchToSignup = () => {
@@ -79,7 +77,7 @@ export default function Header() {
 
           {/* Center Navigation */}
           <div className="hidden md:flex items-center space-x-2 absolute left-1/2 transform -translate-x-1/2">
-            {(isLoggedIn ? loggedInNavItems : navItems).map((item) => {
+            {(user ? loggedInNavItems : navItems).map((item) => {
               const isActive = pathname === item.href;
               return (
                 <Link
@@ -99,8 +97,8 @@ export default function Header() {
 
           {/* Right: Auth Buttons or User Dropdown */}
           <div className="hidden md:flex items-center space-x-4">
-            {isLoggedIn ? (
-              <UserDropdown userName={userName} onLogout={handleLogout} />
+            {user ? (
+              <UserDropdown userName={userData?.name || user.email || '사용자'} onLogout={handleLogout} />
             ) : (
               <>
                 <button
@@ -133,7 +131,7 @@ export default function Header() {
         {isMenuOpen && (
           <div className="md:hidden pb-4 animate-fade-in">
             <div className="backdrop-blur-xl bg-white/95 border border-white/20 shadow-2xl rounded-lg p-4 space-y-2">
-              {(isLoggedIn ? loggedInNavItems : navItems).map((item) => {
+              {(user ? loggedInNavItems : navItems).map((item) => {
                 const isActive = pathname === item.href;
                 return (
                   <Link
@@ -151,13 +149,13 @@ export default function Header() {
                 );
               })}
               <div className="h-px bg-gray-300 my-2"></div>
-              {isLoggedIn ? (
+              {user ? (
                 <>
                   <div className="px-4 py-2 text-gray-900 font-medium">
-                    {userName}
+                    {userData?.name || user.email}
                   </div>
                   <Link
-                    href="/profile"
+                    href="/mypage"
                     className="block px-4 py-3 rounded-lg font-medium text-gray-900 hover:text-blue-600 hover:bg-white/40 transition-colors duration-200"
                     onClick={() => setIsMenuOpen(false)}
                   >

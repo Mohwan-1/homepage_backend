@@ -1,7 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Camera, MapPin, Plus, Trash2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Camera, MapPin, Plus, Trash2, ArrowLeft, Home } from 'lucide-react';
+import { useAuth } from '@/contexts/auth-context';
+import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, addDoc, deleteDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 interface Address {
   id: string;
@@ -12,62 +16,140 @@ interface Address {
   isDefault: boolean;
 }
 
-const mockAddresses: Address[] = [
-  {
-    id: '1',
-    name: '집',
-    address: '서울시 강남구 테헤란로 123',
-    detailAddress: '456호',
-    zipCode: '06234',
-    isDefault: true
-  },
-  {
-    id: '2',
-    name: '회사',
-    address: '서울시 서초구 서초대로 789',
-    detailAddress: '10층',
-    zipCode: '06789',
-    isDefault: false
-  }
-];
-
 export default function ProfilePage() {
+  const router = useRouter();
+  const { user, userData } = useAuth();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [email, setEmail] = useState('');
-  const [addresses, setAddresses] = useState<Address[]>(mockAddresses);
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const userDataStr = localStorage.getItem('userData');
-    if (userDataStr) {
-      const userData = JSON.parse(userDataStr);
+    if (user && userData) {
       setName(userData.name || '');
-      setEmail(userData.email || '');
+      setEmail(user.email || '');
+      loadUserProfile();
+      loadAddresses();
     }
-    setPhone('010-1234-5678');
-    setBirthDate('1990-01-01');
-  }, []);
+  }, [user, userData]);
 
-  const handleSave = () => {
-    alert('프로필이 저장되었습니다.');
+  const loadUserProfile = async () => {
+    if (!user) return;
+
+    try {
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists()) {
+        const data = userDoc.data();
+        setPhone(data.phone || '');
+        setBirthDate(data.birthDate || '');
+      }
+    } catch (error) {
+      console.error('Failed to load profile:', error);
+    }
   };
 
-  const deleteAddress = (id: string) => {
-    if (confirm('이 주소를 삭제하시겠습니까?')) {
+  const loadAddresses = async () => {
+    if (!user) return;
+
+    try {
+      const addressesQuery = query(
+        collection(db, 'addresses'),
+        where('userId', '==', user.uid)
+      );
+      const querySnapshot = await getDocs(addressesQuery);
+      const addressesData: Address[] = [];
+
+      querySnapshot.forEach((doc) => {
+        addressesData.push({
+          id: doc.id,
+          ...doc.data(),
+        } as Address);
+      });
+
+      setAddresses(addressesData);
+    } catch (error) {
+      console.error('Failed to load addresses:', error);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!user) return;
+
+    setIsLoading(true);
+    try {
+      await updateDoc(doc(db, 'users', user.uid), {
+        name,
+        phone,
+        birthDate,
+      });
+
+      alert('프로필이 저장되었습니다.');
+    } catch (error) {
+      console.error('Failed to save profile:', error);
+      alert('프로필 저장에 실패했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const deleteAddress = async (id: string) => {
+    if (!confirm('이 주소를 삭제하시겠습니까?')) return;
+
+    try {
+      await deleteDoc(doc(db, 'addresses', id));
       setAddresses(addresses.filter(addr => addr.id !== id));
+    } catch (error) {
+      console.error('Failed to delete address:', error);
+      alert('주소 삭제에 실패했습니다.');
     }
   };
 
-  const setDefaultAddress = (id: string) => {
-    setAddresses(addresses.map(addr => ({
-      ...addr,
-      isDefault: addr.id === id
-    })));
+  const setDefaultAddress = async (id: string) => {
+    if (!user) return;
+
+    try {
+      // Update all addresses for this user
+      const batch = addresses.map(async (addr) => {
+        const addressRef = doc(db, 'addresses', addr.id);
+        await updateDoc(addressRef, {
+          isDefault: addr.id === id
+        });
+      });
+
+      await Promise.all(batch);
+
+      setAddresses(addresses.map(addr => ({
+        ...addr,
+        isDefault: addr.id === id
+      })));
+    } catch (error) {
+      console.error('Failed to set default address:', error);
+      alert('기본 배송지 설정에 실패했습니다.');
+    }
   };
 
   return (
     <div className="space-y-6">
+      {/* Navigation Buttons */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          <ArrowLeft size={20} />
+          <span>뒤로가기</span>
+        </button>
+        <button
+          onClick={() => router.push('/')}
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          <Home size={20} />
+          <span>홈으로</span>
+        </button>
+      </div>
+
       <div>
         <h1 className="text-2xl font-bold text-gray-800">내 정보</h1>
         <p className="text-gray-600 mt-1">개인정보를 관리하고 수정할 수 있습니다</p>
@@ -213,9 +295,10 @@ export default function ProfilePage() {
       <div className="flex justify-end">
         <button
           onClick={handleSave}
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          disabled={isLoading}
+          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          변경사항 저장
+          {isLoading ? '저장 중...' : '변경사항 저장'}
         </button>
       </div>
     </div>

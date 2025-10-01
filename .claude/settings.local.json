@@ -15,7 +15,11 @@
       "Bash(git push:*)",
       "Bash(git rm:*)",
       "Bash(npm install:*)",
-      "Bash(del nul)"
+      "Bash(del nul)",
+      "SlashCommand(/sc:index)",
+      "Bash(dir:*)",
+      "Bash(mkdir:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []

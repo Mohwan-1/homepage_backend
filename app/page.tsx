@@ -5,6 +5,7 @@ import Benefits from '@/components/sections/benefits';
 import Hook from '@/components/sections/hook';
 import Story from '@/components/sections/story';
 import ProductsHome from '@/components/sections/products-home';
+import Reviews from '@/components/sections/reviews';
 import Offer from '@/components/sections/offer';
 
 export default function Home() {
@@ -17,6 +18,7 @@ export default function Home() {
         <Hook />
         <Story />
         <ProductsHome />
+        <Reviews />
         <Offer />
       </main>
       <Footer />

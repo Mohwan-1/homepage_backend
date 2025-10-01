@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/contexts/cart-context';
-import { CreditCard, Wallet, Building, ShoppingBag, MapPin, User as UserIcon, Phone, Mail } from 'lucide-react';
+import { CreditCard, Wallet, Building, ShoppingBag, MapPin, User as UserIcon, Phone, Mail, ArrowLeft, Home } from 'lucide-react';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -58,40 +58,46 @@ export default function CheckoutPage() {
     setIsLoading(true);
 
     try {
-      // TODO: 토스페이먼츠 연동
-      // const response = await fetch('/api/payments/toss', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     amount: totalAmount,
-      //     orderId: `ORDER-${Date.now()}`,
-      //     orderName: items[0].name + (items.length > 1 ? ` 외 ${items.length - 1}건` : ''),
-      //     customerName: orderInfo.name,
-      //     customerEmail: orderInfo.email,
-      //   }),
-      // });
+      const orderId = `ORDER_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      const orderName = items[0].name + (items.length > 1 ? ` 외 ${items.length - 1}건` : '');
 
-      // 임시 데모 결제 처리
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      const orderId = `ORD-${Date.now()}`;
-
-      // 주문 정보 저장
+      // 주문 정보 저장 (결제 전)
       const orderData = {
         orderId,
         items,
         totalAmount,
         orderInfo,
         orderDate: new Date().toISOString(),
-        status: 'paid',
+        status: 'pending',
       };
       localStorage.setItem(`order_${orderId}`, JSON.stringify(orderData));
 
-      // 장바구니 비우기
-      clearCart();
+      // TossPayments 결제 요청
+      if (orderInfo.paymentMethod === 'card' || orderInfo.paymentMethod === 'toss') {
+        const { requestPayment } = await import('@/lib/toss-payments');
 
-      // 주문 완료 페이지로 이동
-      router.push(`/order-complete?orderId=${orderId}`);
+        await requestPayment({
+          amount: totalAmount,
+          orderId,
+          orderName,
+          customerName: orderInfo.name,
+          customerEmail: orderInfo.email,
+          customerMobilePhone: orderInfo.phone,
+        });
+      } else if (orderInfo.paymentMethod === 'transfer') {
+        // 무통장 입금 처리
+        alert('무통장 입금 정보가 이메일로 발송됩니다.');
+
+        // 주문 상태 업데이트
+        orderData.status = 'pending_transfer';
+        localStorage.setItem(`order_${orderId}`, JSON.stringify(orderData));
+
+        // 장바구니 비우기
+        clearCart();
+
+        // 주문 완료 페이지로 이동
+        router.push(`/order-complete?orderId=${orderId}`);
+      }
     } catch (error) {
       console.error('Payment failed:', error);
       alert('결제에 실패했습니다. 다시 시도해주세요.');
@@ -107,6 +113,24 @@ export default function CheckoutPage() {
   return (
     <div className="min-h-screen bg-gray-50 pt-20">
       <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Navigation Buttons */}
+        <div className="flex gap-2 mb-6">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <ArrowLeft size={20} />
+            <span>뒤로가기</span>
+          </button>
+          <button
+            onClick={() => router.push('/')}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <Home size={20} />
+            <span>홈으로</span>
+          </button>
+        </div>
+
         <h1 className="text-3xl font-bold text-gray-800 mb-8">주문/결제</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
