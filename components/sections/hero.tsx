@@ -93,23 +93,23 @@ export default function Hero() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 text-center">
-        <h1 className="text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight drop-shadow-lg">
-          당신의 이야기가 콘텐츠가 됩니다
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 text-center">
+        <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-4 sm:mb-6 leading-tight drop-shadow-lg">
+          당신의 이야기가<br className="sm:hidden" /> 콘텐츠가 됩니다
         </h1>
-        <p className="text-xl text-white mb-8 max-w-3xl mx-auto leading-relaxed drop-shadow-md">
-          중장년을 위한 맞춤형 유튜브 채널 성장 로드맵
+        <p className="text-lg sm:text-xl lg:text-2xl text-white mb-6 sm:mb-8 max-w-3xl mx-auto leading-relaxed drop-shadow-md px-4">
+          중장년을 위한 맞춤형<br className="sm:hidden" /> 유튜브 채널 성장 로드맵
         </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 px-4">
           <Link
             href="/products"
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-8 py-4 rounded-lg transition-colors shadow-lg"
+            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 sm:px-8 py-3 sm:py-4 rounded-lg transition-colors shadow-lg text-center"
           >
             상품 살펴보기
           </Link>
           <Link
             href="/contact"
-            className="bg-white hover:bg-gray-50 text-gray-900 font-medium px-8 py-4 rounded-lg border border-gray-300 transition-colors shadow-lg"
+            className="w-full sm:w-auto bg-white hover:bg-gray-50 text-gray-900 font-medium px-6 sm:px-8 py-3 sm:py-4 rounded-lg border border-gray-300 transition-colors shadow-lg text-center"
           >
             무료 상담 받기
           </Link>

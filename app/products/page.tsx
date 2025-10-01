@@ -109,14 +109,14 @@ export default function Products() {
         />
 
         {/* 카테고리 탭 */}
-        <section className="py-8 border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="flex flex-wrap gap-4">
+        <section className="py-6 sm:py-8 border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <div className="flex flex-wrap gap-2 sm:gap-4">
               {categories.map((category) => (
                 <button
                   key={category}
                   onClick={() => setActiveCategory(category)}
-                  className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+                  className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg text-sm sm:text-base font-medium transition-colors ${
                     activeCategory === category
                       ? 'bg-blue-600 text-white'
                       : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
@@ -130,40 +130,40 @@ export default function Products() {
         </section>
 
         {/* 상품 그리드 */}
-        <section className="py-16 lg:py-24">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <section className="py-12 sm:py-16 lg:py-24">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
               {filteredProducts.map((product) => (
                 <div
                   key={product.id}
-                  className="bg-white border border-gray-200 rounded-lg p-8 shadow-sm hover:shadow-md transition-shadow relative"
+                  className="bg-white border border-gray-200 rounded-lg p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow relative"
                 >
                   {product.popular && (
-                    <div className="absolute top-4 right-4 bg-blue-600 text-white text-sm px-3 py-1 rounded">
+                    <div className="absolute top-3 sm:top-4 right-3 sm:right-4 bg-blue-600 text-white text-xs sm:text-sm px-2 sm:px-3 py-1 rounded">
                       인기
                     </div>
                   )}
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
                     {product.name}
                   </h3>
-                  <p className="text-gray-600 mb-6">{product.description}</p>
-                  <div className="mb-6">
-                    <span className="text-3xl font-bold text-gray-900">
+                  <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">{product.description}</p>
+                  <div className="mb-4 sm:mb-6">
+                    <span className="text-2xl sm:text-3xl font-bold text-gray-900">
                       {product.price.toLocaleString()}원
                     </span>
-                    <span className="text-gray-600">/월</span>
+                    <span className="text-sm sm:text-base text-gray-600">/월</span>
                   </div>
-                  <ul className="space-y-3 mb-8">
+                  <ul className="space-y-2 sm:space-y-3 mb-6 sm:mb-8">
                     {product.features.map((feature, index) => (
                       <li key={index} className="flex items-start">
                         <span className="text-blue-600 mr-2">✓</span>
-                        <span className="text-gray-600">{feature}</span>
+                        <span className="text-sm sm:text-base text-gray-600">{feature}</span>
                       </li>
                     ))}
                   </ul>
                   <button
                     onClick={() => handleSelectProduct(product)}
-                    className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                    className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base font-medium"
                   >
                     선택하기
                   </button>
@@ -174,25 +174,25 @@ export default function Products() {
         </section>
 
         {/* 기능 비교표 */}
-        <section className="py-16 lg:py-24 bg-gray-50">
-          <div className="max-w-7xl mx-auto px-6">
-            <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">
+        <section className="py-12 sm:py-16 lg:py-24 bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-8 sm:mb-12 text-center">
               기능 비교
             </h2>
-            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="px-6 py-4 text-left font-bold text-gray-900">
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-base font-bold text-gray-900">
                       기능
                     </th>
-                    <th className="px-6 py-4 text-center font-bold text-gray-900">
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-center text-xs sm:text-base font-bold text-gray-900">
                       기본형
                     </th>
-                    <th className="px-6 py-4 text-center font-bold text-gray-900">
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-center text-xs sm:text-base font-bold text-gray-900">
                       프리미엄
                     </th>
-                    <th className="px-6 py-4 text-center font-bold text-gray-900">
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-center text-xs sm:text-base font-bold text-gray-900">
                       엔터프라이즈
                     </th>
                   </tr>
@@ -203,22 +203,22 @@ export default function Products() {
                       key={index}
                       className="border-b border-gray-200 last:border-0"
                     >
-                      <td className="px-6 py-4 text-gray-900">{item.feature}</td>
-                      <td className="px-6 py-4 text-center">
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-base text-gray-900">{item.feature}</td>
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-center">
                         {item.basic ? (
                           <span className="text-blue-600">✓</span>
                         ) : (
                           <span className="text-gray-300">-</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-center">
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-center">
                         {item.premium ? (
                           <span className="text-blue-600">✓</span>
                         ) : (
                           <span className="text-gray-300">-</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-center">
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-center">
                         {item.enterprise ? (
                           <span className="text-blue-600">✓</span>
                         ) : (
@@ -234,12 +234,12 @@ export default function Products() {
         </section>
 
         {/* FAQ */}
-        <section className="py-16 lg:py-24">
-          <div className="max-w-3xl mx-auto px-6">
-            <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">
+        <section className="py-12 sm:py-16 lg:py-24">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-8 sm:mb-12 text-center">
               자주 묻는 질문
             </h2>
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {faqs.map((faq, index) => (
                 <div
                   key={index}
@@ -247,16 +247,16 @@ export default function Products() {
                 >
                   <button
                     onClick={() => setOpenFaq(openFaq === index ? null : index)}
-                    className="w-full px-6 py-4 text-left font-medium text-gray-900 hover:bg-gray-50 transition-colors flex justify-between items-center"
+                    className="w-full px-4 sm:px-6 py-3 sm:py-4 text-left text-sm sm:text-base font-medium text-gray-900 hover:bg-gray-50 transition-colors flex justify-between items-center gap-2"
                   >
-                    <span>{faq.question}</span>
-                    <span className="text-blue-600">
+                    <span className="flex-1">{faq.question}</span>
+                    <span className="text-blue-600 text-lg sm:text-xl flex-shrink-0">
                       {openFaq === index ? '−' : '+'}
                     </span>
                   </button>
                   {openFaq === index && (
-                    <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-                      <p className="text-gray-600">{faq.answer}</p>
+                    <div className="px-4 sm:px-6 py-3 sm:py-4 bg-gray-50 border-t border-gray-200">
+                      <p className="text-sm sm:text-base text-gray-600">{faq.answer}</p>
                     </div>
                   )}
                 </div>

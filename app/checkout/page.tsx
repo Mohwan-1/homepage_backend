@@ -112,70 +112,70 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pt-20">
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Navigation Buttons */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-4 sm:mb-6">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
           >
-            <ArrowLeft size={20} />
+            <ArrowLeft size={18} className="sm:w-5 sm:h-5" />
             <span>뒤로가기</span>
           </button>
           <button
             onClick={() => router.push('/')}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
           >
-            <Home size={20} />
+            <Home size={18} className="sm:w-5 sm:h-5" />
             <span>홈으로</span>
           </button>
         </div>
 
-        <h1 className="text-3xl font-bold text-gray-800 mb-8">주문/결제</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 sm:mb-8">주문/결제</h1>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
           {/* Left: Order Form */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             {/* Customer Info */}
-            <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
-              <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <UserIcon size={20} />
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 sm:p-6">
+              <h2 className="text-base sm:text-lg font-bold text-gray-800 mb-3 sm:mb-4 flex items-center gap-2">
+                <UserIcon size={18} className="sm:w-5 sm:h-5" />
                 주문자 정보
               </h2>
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">이름</label>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">이름</label>
                   <input
                     type="text"
                     name="name"
                     value={orderInfo.name}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">이메일</label>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">이메일</label>
                   <input
                     type="email"
                     name="email"
                     value={orderInfo.email}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">전화번호</label>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">전화번호</label>
                   <input
                     type="tel"
                     name="phone"
                     value={orderInfo.phone}
                     onChange={handleInputChange}
                     placeholder="010-1234-5678"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                     required
                   />
                 </div>
@@ -183,97 +183,97 @@ export default function CheckoutPage() {
             </div>
 
             {/* Delivery Address */}
-            <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
-              <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <MapPin size={20} />
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 sm:p-6">
+              <h2 className="text-base sm:text-lg font-bold text-gray-800 mb-3 sm:mb-4 flex items-center gap-2">
+                <MapPin size={18} className="sm:w-5 sm:h-5" />
                 배송지 정보
               </h2>
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">우편번호</label>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">우편번호</label>
                   <div className="flex gap-2">
                     <input
                       type="text"
                       name="zipCode"
                       value={orderInfo.zipCode}
                       onChange={handleInputChange}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                      className="flex-1 px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                     />
-                    <button className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                    <button className="px-3 sm:px-4 py-2 text-xs sm:text-sm bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors whitespace-nowrap">
                       우편번호 찾기
                     </button>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">주소</label>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">주소</label>
                   <input
                     type="text"
                     name="address"
                     value={orderInfo.address}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">상세주소</label>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">상세주소</label>
                   <input
                     type="text"
                     name="detailAddress"
                     value={orderInfo.detailAddress}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                   />
                 </div>
               </div>
             </div>
 
             {/* Payment Method */}
-            <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
-              <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <CreditCard size={20} />
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 sm:p-6">
+              <h2 className="text-base sm:text-lg font-bold text-gray-800 mb-3 sm:mb-4 flex items-center gap-2">
+                <CreditCard size={18} className="sm:w-5 sm:h-5" />
                 결제 방법
               </h2>
-              <div className="space-y-3">
-                <label className="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
+              <div className="space-y-2 sm:space-y-3">
+                <label className="flex items-center p-3 sm:p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
                   <input
                     type="radio"
                     name="paymentMethod"
                     value="card"
                     checked={orderInfo.paymentMethod === 'card'}
                     onChange={handleInputChange}
-                    className="mr-3"
+                    className="mr-2 sm:mr-3"
                   />
-                  <CreditCard size={20} className="mr-2 text-gray-600" />
-                  <span className="font-medium">신용카드</span>
+                  <CreditCard size={18} className="mr-2 text-gray-600 sm:w-5 sm:h-5" />
+                  <span className="text-sm sm:text-base font-medium">신용카드</span>
                 </label>
 
-                <label className="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
+                <label className="flex items-center p-3 sm:p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
                   <input
                     type="radio"
                     name="paymentMethod"
                     value="toss"
                     checked={orderInfo.paymentMethod === 'toss'}
                     onChange={handleInputChange}
-                    className="mr-3"
+                    className="mr-2 sm:mr-3"
                   />
-                  <Wallet size={20} className="mr-2 text-gray-600" />
-                  <span className="font-medium">토스페이</span>
+                  <Wallet size={18} className="mr-2 text-gray-600 sm:w-5 sm:h-5" />
+                  <span className="text-sm sm:text-base font-medium">토스페이</span>
                 </label>
 
-                <label className="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
+                <label className="flex items-center p-3 sm:p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
                   <input
                     type="radio"
                     name="paymentMethod"
                     value="transfer"
                     checked={orderInfo.paymentMethod === 'transfer'}
                     onChange={handleInputChange}
-                    className="mr-3"
+                    className="mr-2 sm:mr-3"
                   />
-                  <Building size={20} className="mr-2 text-gray-600" />
-                  <span className="font-medium">무통장입금</span>
+                  <Building size={18} className="mr-2 text-gray-600 sm:w-5 sm:h-5" />
+                  <span className="text-sm sm:text-base font-medium">무통장입금</span>
                 </label>
               </div>
             </div>
@@ -281,36 +281,36 @@ export default function CheckoutPage() {
 
           {/* Right: Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 sticky top-24">
-              <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <ShoppingBag size={20} />
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 sm:p-6 sticky top-24">
+              <h2 className="text-base sm:text-lg font-bold text-gray-800 mb-3 sm:mb-4 flex items-center gap-2">
+                <ShoppingBag size={18} className="sm:w-5 sm:h-5" />
                 주문 상품
               </h2>
 
-              <div className="space-y-4 mb-6">
+              <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
                 {items.map((item) => (
-                  <div key={item.id} className="flex justify-between items-start">
+                  <div key={item.id} className="flex justify-between items-start gap-2">
                     <div className="flex-1">
-                      <p className="font-medium text-gray-800">{item.name}</p>
-                      <p className="text-sm text-gray-600">수량: {item.quantity}개</p>
+                      <p className="text-sm sm:text-base font-medium text-gray-800">{item.name}</p>
+                      <p className="text-xs sm:text-sm text-gray-600">수량: {item.quantity}개</p>
                     </div>
-                    <p className="font-medium text-gray-800">
+                    <p className="text-sm sm:text-base font-medium text-gray-800 whitespace-nowrap">
                       ₩{(item.price * item.quantity).toLocaleString()}
                     </p>
                   </div>
                 ))}
               </div>
 
-              <div className="border-t border-gray-200 pt-4 space-y-2 mb-6">
-                <div className="flex justify-between text-gray-600">
+              <div className="border-t border-gray-200 pt-3 sm:pt-4 space-y-2 mb-4 sm:mb-6">
+                <div className="flex justify-between text-sm sm:text-base text-gray-600">
                   <span>상품 금액</span>
                   <span>₩{totalAmount.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between text-gray-600">
+                <div className="flex justify-between text-sm sm:text-base text-gray-600">
                   <span>배송비</span>
                   <span>무료</span>
                 </div>
-                <div className="flex justify-between text-xl font-bold text-gray-800 pt-2 border-t border-gray-200">
+                <div className="flex justify-between text-lg sm:text-xl font-bold text-gray-800 pt-2 border-t border-gray-200">
                   <span>총 결제금액</span>
                   <span className="text-blue-600">₩{totalAmount.toLocaleString()}</span>
                 </div>
@@ -319,12 +319,12 @@ export default function CheckoutPage() {
               <button
                 onClick={handlePayment}
                 disabled={isLoading}
-                className="w-full bg-blue-600 text-white py-4 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-blue-600 text-white py-3 sm:py-4 rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? '결제 처리 중...' : `₩${totalAmount.toLocaleString()} 결제하기`}
               </button>
 
-              <p className="text-xs text-gray-500 text-center mt-4">
+              <p className="text-xs text-gray-500 text-center mt-3 sm:mt-4 leading-relaxed">
                 주문 진행 시 이용약관 및 개인정보처리방침에 동의하는 것으로 간주됩니다.
               </p>
             </div>
