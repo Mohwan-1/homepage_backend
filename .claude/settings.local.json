@@ -19,7 +19,8 @@
       "SlashCommand(/sc:index)",
       "Bash(dir:*)",
       "Bash(mkdir:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(vercel:*)"
     ],
     "deny": [],
     "ask": []

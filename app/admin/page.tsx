@@ -7,7 +7,7 @@ interface DashboardMetric {
   title: string;
   value: number | string;
   change?: number;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: any;
   color: 'blue' | 'green' | 'purple' | 'orange';
 }
 
