@@ -47,12 +47,10 @@ export default function MypageDashboard() {
     try {
       console.log('🔄 주문 내역 로딩 중... userId:', user.uid);
 
-      // 최근 주문 3개 가져오기
+      // userId로만 필터링 (인덱스 불필요)
       const ordersQuery = query(
         collection(db, 'orders'),
-        where('userId', '==', user.uid),
-        orderBy('createdAt', 'desc'),
-        limit(3)
+        where('userId', '==', user.uid)
       );
 
       const querySnapshot = await getDocs(ordersQuery);
@@ -66,19 +64,22 @@ export default function MypageDashboard() {
         } as Order);
       });
 
-      console.log('✅ 최근 주문 로드 완료:', ordersData.length, '건');
-      setOrders(ordersData);
+      console.log('✅ 전체 주문 로드 완료:', ordersData.length, '건');
 
-      // 전체 주문 수 계산
-      const allOrdersQuery = query(
-        collection(db, 'orders'),
-        where('userId', '==', user.uid)
-      );
-      const allOrdersSnapshot = await getDocs(allOrdersQuery);
+      // 클라이언트에서 정렬하여 최근 3개만 표시
+      const sortedOrders = ordersData.sort((a, b) => {
+        const dateA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+        const dateB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
+        return dateB - dateA;
+      }).slice(0, 3);
 
-      const totalOrders = allOrdersSnapshot.size;
-      const shippingOrders = allOrdersSnapshot.docs.filter(
-        doc => doc.data().status === 'shipping'
+      console.log('📋 최근 3개 주문:', sortedOrders);
+      setOrders(sortedOrders);
+
+      // 통계 계산
+      const totalOrders = ordersData.length;
+      const shippingOrders = ordersData.filter(
+        order => order.status === 'shipping'
       ).length;
 
       console.log('📊 통계:', { totalOrders, shippingOrders });
@@ -88,8 +89,9 @@ export default function MypageDashboard() {
         points: 2500, // TODO: 포인트 시스템 구현 시 실제 데이터로 변경
         shippingOrders
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Failed to load orders:', error);
+      console.error('❌ Error details:', error.message, error.code);
     }
   };
 

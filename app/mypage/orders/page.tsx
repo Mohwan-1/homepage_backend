@@ -43,6 +43,8 @@ export default function OrdersPage() {
 
     setIsLoading(true);
     try {
+      console.log('🔄 주문 내역 페이지 로딩 중... userId:', user.uid);
+
       // Calculate date range based on period
       const now = new Date();
       const periodDays = {
@@ -53,27 +55,43 @@ export default function OrdersPage() {
       }[period] || 90;
 
       const startDate = new Date(now.getTime() - periodDays * 24 * 60 * 60 * 1000);
+      console.log('📅 기간:', period, '시작일:', startDate);
 
+      // userId로만 필터링 (인덱스 불필요)
       const ordersQuery = query(
         collection(db, 'orders'),
-        where('userId', '==', user.uid),
-        where('createdAt', '>=', Timestamp.fromDate(startDate)),
-        orderBy('createdAt', 'desc')
+        where('userId', '==', user.uid)
       );
 
       const querySnapshot = await getDocs(ordersQuery);
       const ordersData: Order[] = [];
 
       querySnapshot.forEach((doc) => {
-        ordersData.push({
-          id: doc.id,
-          ...doc.data(),
-        } as Order);
+        console.log('📦 주문 문서:', doc.id, doc.data());
+        const data = doc.data();
+        const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date(0);
+
+        // 클라이언트에서 날짜 필터링
+        if (createdAt >= startDate) {
+          ordersData.push({
+            id: doc.id,
+            ...data,
+          } as Order);
+        }
       });
 
-      setOrders(ordersData);
-    } catch (error) {
-      console.error('Failed to load orders:', error);
+      // 클라이언트에서 정렬
+      const sortedOrders = ordersData.sort((a, b) => {
+        const dateA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+        const dateB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
+        return dateB - dateA;
+      });
+
+      console.log('✅ 주문 로드 완료:', sortedOrders.length, '건');
+      setOrders(sortedOrders);
+    } catch (error: any) {
+      console.error('❌ Failed to load orders:', error);
+      console.error('❌ Error details:', error.message, error.code);
     } finally {
       setIsLoading(false);
     }
