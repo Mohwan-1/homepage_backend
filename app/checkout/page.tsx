@@ -98,9 +98,23 @@ export default function CheckoutPage() {
         // 주문 완료 페이지로 이동
         router.push(`/order-complete?orderId=${orderId}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Payment failed:', error);
-      alert('결제에 실패했습니다. 다시 시도해주세요.');
+
+      // 에러 메시지 상세화
+      let errorMessage = '결제에 실패했습니다. 다시 시도해주세요.';
+
+      if (error.message) {
+        if (error.message.includes('Client Key')) {
+          errorMessage = '결제 시스템 설정 오류입니다. 관리자에게 문의해주세요.';
+        } else if (error.code === 'USER_CANCEL') {
+          errorMessage = '결제가 취소되었습니다.';
+        } else {
+          errorMessage = `결제 실패: ${error.message}`;
+        }
+      }
+
+      alert(errorMessage);
     } finally {
       setIsLoading(false);
     }
