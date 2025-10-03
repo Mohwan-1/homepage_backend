@@ -6,11 +6,13 @@ import { CheckCircle } from 'lucide-react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/auth-context';
+import { useCart } from '@/contexts/cart-context';
 
 function PaymentSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
+  const { clearCart } = useCart();
   const [isProcessing, setIsProcessing] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [waitingForUser, setWaitingForUser] = useState(false);
@@ -89,8 +91,11 @@ function PaymentSuccessContent() {
         orderData.firebaseId = orderRef.id;
         localStorage.setItem(`order_${orderId}`, JSON.stringify(orderData));
 
-        // 장바구니 비우기
+        // 장바구니 완전히 비우기 (Context + localStorage 모두)
+        console.log('🧹 장바구니 초기화 중...');
+        clearCart();
         localStorage.removeItem('cart');
+        console.log('✅ 장바구니 초기화 완료');
 
         setIsProcessing(false);
 
@@ -106,7 +111,7 @@ function PaymentSuccessContent() {
     };
 
     processPayment();
-  }, [searchParams, router, user]);
+  }, [searchParams, router, user, clearCart]);
 
   if (error) {
     return (

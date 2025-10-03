@@ -39,9 +39,14 @@ export default function MypageDashboard() {
   }, [user]);
 
   const loadOrders = async () => {
-    if (!user) return;
+    if (!user) {
+      console.log('⚠️ loadOrders: user 없음');
+      return;
+    }
 
     try {
+      console.log('🔄 주문 내역 로딩 중... userId:', user.uid);
+
       // 최근 주문 3개 가져오기
       const ordersQuery = query(
         collection(db, 'orders'),
@@ -54,12 +59,14 @@ export default function MypageDashboard() {
       const ordersData: Order[] = [];
 
       querySnapshot.forEach((doc) => {
+        console.log('📦 주문 문서 발견:', doc.id, doc.data());
         ordersData.push({
           id: doc.id,
           ...doc.data(),
         } as Order);
       });
 
+      console.log('✅ 최근 주문 로드 완료:', ordersData.length, '건');
       setOrders(ordersData);
 
       // 전체 주문 수 계산
@@ -74,13 +81,15 @@ export default function MypageDashboard() {
         doc => doc.data().status === 'shipping'
       ).length;
 
+      console.log('📊 통계:', { totalOrders, shippingOrders });
+
       setStats({
         totalOrders,
         points: 2500, // TODO: 포인트 시스템 구현 시 실제 데이터로 변경
         shippingOrders
       });
     } catch (error) {
-      console.error('Failed to load orders:', error);
+      console.error('❌ Failed to load orders:', error);
     }
   };
 
