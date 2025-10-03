@@ -7,5 +7,16 @@
     "deploymentEnabled": {
       "main": true
     }
+  },
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_FIREBASE_API_KEY": "AIzaSyDa9274pjOegiOXtlgDYMcu7LBe72wEG1Y",
+      "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN": "sidondding-homepage.firebaseapp.com",
+      "NEXT_PUBLIC_FIREBASE_PROJECT_ID": "sidondding-homepage",
+      "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET": "sidondding-homepage.firebasestorage.app",
+      "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "948064095251",
+      "NEXT_PUBLIC_FIREBASE_APP_ID": "1:948064095251:web:963a9d16cad35feafb03e6",
+      "NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID": "G-3XMNN350JE"
+    }
   }
 }
