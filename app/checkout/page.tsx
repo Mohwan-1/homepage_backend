@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/contexts/cart-context';
+import { useAuth } from '@/contexts/auth-context';
 import { CreditCard, Wallet, Building, ShoppingBag, MapPin, User as UserIcon, Phone, Mail, ArrowLeft, Home } from 'lucide-react';
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const { user, userData } = useAuth();
   const { items, totalAmount, clearCart } = useCart();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -21,17 +23,22 @@ export default function CheckoutPage() {
   });
 
   useEffect(() => {
+    // 로그인 체크
+    if (!user) {
+      alert('결제는 로그인 후 이용하실 수 있습니다.\n로그인 페이지로 이동합니다.');
+      router.push('/login');
+      return;
+    }
+
     // 로그인 사용자 정보 불러오기
-    const userDataStr = localStorage.getItem('userData');
-    if (userDataStr) {
-      const userData = JSON.parse(userDataStr);
+    if (userData) {
       setOrderInfo(prev => ({
         ...prev,
-        name: userData.name || '',
-        email: userData.email || '',
+        name: userData.name || user.displayName || '',
+        email: userData.email || user.email || '',
       }));
     }
-  }, []);
+  }, [user, userData, router]);
 
   useEffect(() => {
     // 장바구니가 비어있으면 상품 페이지로 리다이렉트

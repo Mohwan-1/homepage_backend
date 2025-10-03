@@ -13,6 +13,7 @@ function PaymentSuccessContent() {
   const { user } = useAuth();
   const [isProcessing, setIsProcessing] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [waitingForUser, setWaitingForUser] = useState(false);
 
   useEffect(() => {
     const processPayment = async () => {
@@ -26,11 +27,15 @@ function PaymentSuccessContent() {
         return;
       }
 
+      // user가 로드될 때까지 대기
       if (!user) {
-        setError('로그인 정보를 찾을 수 없습니다.');
-        setIsProcessing(false);
+        console.log('⏳ 사용자 정보 로딩 대기 중...');
+        setWaitingForUser(true);
         return;
       }
+
+      setWaitingForUser(false);
+      console.log('✅ 사용자 정보 로드 완료:', user.email);
 
       try {
         console.log('🔄 결제 승인 처리 시작:', { paymentKey, orderId, amount });
@@ -126,11 +131,13 @@ function PaymentSuccessContent() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-8 max-w-md w-full text-center">
-        {isProcessing ? (
+        {isProcessing || waitingForUser ? (
           <>
             <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <h1 className="text-2xl font-bold text-gray-800 mb-2">결제 처리 중</h1>
-            <p className="text-gray-600">결제를 완료하는 중입니다. 잠시만 기다려주세요.</p>
+            <p className="text-gray-600">
+              {waitingForUser ? '사용자 정보를 확인하는 중입니다...' : '결제를 완료하는 중입니다. 잠시만 기다려주세요.'}
+            </p>
           </>
         ) : (
           <>
