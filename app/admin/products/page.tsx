@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DataTable, { ColumnDef, TableAction } from '@/components/admin/data-table';
 import { Search, Plus, Package } from 'lucide-react';
+import { collection, getDocs, query, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 interface ProductAdmin {
   id: string;
@@ -16,69 +18,47 @@ interface ProductAdmin {
   updatedAt: string;
 }
 
-const mockProducts: ProductAdmin[] = [
-  {
-    id: '1',
-    name: '스마트폰 케이스',
-    price: 29000,
-    stock: 150,
-    category: '액세서리',
-    status: 'active',
-    isVisible: true,
-    createdAt: '2024-01-10',
-    updatedAt: '2024-01-15'
-  },
-  {
-    id: '2',
-    name: '무선 이어폰',
-    price: 89000,
-    stock: 45,
-    category: '전자기기',
-    status: 'active',
-    isVisible: true,
-    createdAt: '2024-01-08',
-    updatedAt: '2024-01-12'
-  },
-  {
-    id: '3',
-    name: '노트북 가방',
-    price: 49000,
-    stock: 0,
-    category: '가방',
-    status: 'inactive',
-    isVisible: false,
-    createdAt: '2024-01-05',
-    updatedAt: '2024-01-10'
-  },
-  {
-    id: '4',
-    name: '마우스',
-    price: 35000,
-    stock: 80,
-    category: '전자기기',
-    status: 'active',
-    isVisible: true,
-    createdAt: '2024-01-03',
-    updatedAt: '2024-01-08'
-  },
-  {
-    id: '5',
-    name: '키보드',
-    price: 125000,
-    stock: 30,
-    category: '전자기기',
-    status: 'discontinued',
-    isVisible: false,
-    createdAt: '2023-12-20',
-    updatedAt: '2024-01-05'
-  },
-];
-
 export default function ProductsPage() {
-  const [products, setProducts] = useState<ProductAdmin[]>(mockProducts);
+  const [products, setProducts] = useState<ProductAdmin[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive' | 'discontinued'>('all');
+
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  const loadProducts = async () => {
+    try {
+      setLoading(true);
+      const productsQuery = query(
+        collection(db, 'products'),
+        orderBy('createdAt', 'desc')
+      );
+      const querySnapshot = await getDocs(productsQuery);
+      const productsData: ProductAdmin[] = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          name: data.name || 'Unknown',
+          price: data.price || 0,
+          stock: data.stock || 0,
+          category: data.category || '미분류',
+          status: data.status || 'active',
+          isVisible: data.isVisible !== undefined ? data.isVisible : true,
+          createdAt: data.createdAt ? new Date(data.createdAt).toLocaleDateString('ko-KR') : '-',
+          updatedAt: data.updatedAt ? new Date(data.updatedAt).toLocaleDateString('ko-KR') : '-'
+        };
+      });
+      setProducts(productsData);
+    } catch (error) {
+      console.error('Failed to load products:', error);
+      alert('상품 목록을 불러오는데 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const categories = ['all', ...Array.from(new Set(products.map(p => p.category)))];
 
@@ -154,25 +134,84 @@ export default function ProductsPage() {
     },
   ];
 
+  const deleteProduct = async (productId: string) => {
+    try {
+      await deleteDoc(doc(db, 'products', productId));
+      await loadProducts();
+      alert('상품이 삭제되었습니다.');
+    } catch (error) {
+      console.error('Failed to delete product:', error);
+      alert('상품 삭제에 실패했습니다.');
+    }
+  };
+
+  const toggleVisibility = async (product: ProductAdmin) => {
+    try {
+      await updateDoc(doc(db, 'products', product.id), {
+        isVisible: !product.isVisible,
+        updatedAt: new Date().toISOString()
+      });
+      await loadProducts();
+      alert(`${product.name}의 노출 상태가 변경되었습니다.`);
+    } catch (error) {
+      console.error('Failed to toggle visibility:', error);
+      alert('노출 상태 변경에 실패했습니다.');
+    }
+  };
+
   const actions: TableAction<ProductAdmin>[] = [
     {
-      label: '수정',
-      onClick: (product) => alert(`${product.name} 수정`),
+      label: '노출 토글',
+      onClick: (product) => {
+        if (confirm(`${product.name}을(를) ${product.isVisible ? '숨기기' : '노출'}하시겠습니까?`)) {
+          toggleVisibility(product);
+        }
+      },
     },
     {
       label: '재고관리',
-      onClick: (product) => alert(`${product.name} 재고 관리`),
+      onClick: (product) => {
+        const newStock = prompt(`${product.name}의 새로운 재고 수량을 입력하세요 (현재: ${product.stock}):`, product.stock.toString());
+        if (newStock !== null) {
+          const stockNumber = parseInt(newStock);
+          if (!isNaN(stockNumber) && stockNumber >= 0) {
+            updateDoc(doc(db, 'products', product.id), {
+              stock: stockNumber,
+              updatedAt: new Date().toISOString()
+            }).then(() => {
+              loadProducts();
+              alert('재고가 업데이트되었습니다.');
+            }).catch((error) => {
+              console.error('Failed to update stock:', error);
+              alert('재고 업데이트에 실패했습니다.');
+            });
+          } else {
+            alert('올바른 숫자를 입력하세요.');
+          }
+        }
+      },
     },
     {
       label: '삭제',
       onClick: (product) => {
-        if (confirm(`${product.name}을(를) 삭제하시겠습니까?`)) {
-          setProducts(products.filter(p => p.id !== product.id));
+        if (confirm(`${product.name}을(를) 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) {
+          deleteProduct(product.id);
         }
       },
       variant: 'destructive',
     },
   ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">상품 목록 로딩 중...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

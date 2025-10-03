@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { User, ShoppingBag, CreditCard, Settings, Package, Clock, CheckCircle } from 'lucide-react';
+import { User, ShoppingBag, CreditCard, Settings, Package, Clock, CheckCircle, ArrowLeft, Home, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -19,7 +19,7 @@ interface Order {
 const quickActions = [
   { title: '내 정보 관리', href: '/mypage/profile', icon: User, color: 'blue' },
   { title: '주문/배송 조회', href: '/mypage/orders', icon: ShoppingBag, color: 'green' },
-  { title: '포인트 내역', href: '/mypage/points', icon: CreditCard, color: 'purple' },
+  { title: '후기 수정', href: '/mypage/reviews', icon: MessageSquare, color: 'purple' },
   { title: '고객센터', href: '/support', icon: Settings, color: 'orange' }
 ];
 
@@ -97,6 +97,24 @@ export default function MypageDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Navigation Buttons */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => window.history.back()}
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          <ArrowLeft size={20} />
+          <span>뒤로가기</span>
+        </button>
+        <Link
+          href="/"
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          <Home size={20} />
+          <span>홈으로</span>
+        </Link>
+      </div>
+
       {/* User Info Summary Card */}
       <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
         <div className="flex items-center gap-4">

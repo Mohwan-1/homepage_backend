@@ -17,6 +17,8 @@ export default function LoginForm({ onSuccess, onSwitchToSignup }: LoginFormProp
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
+  console.log('🟦 LoginForm 렌더링됨', { signInWithGoogle: !!signInWithGoogle });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -122,13 +124,24 @@ export default function LoginForm({ onSuccess, onSwitchToSignup }: LoginFormProp
         <button
           type="button"
           onClick={async () => {
+            console.log('🟢 Google 로그인 버튼 클릭됨!');
             try {
               setIsLoading(true);
               setError('');
+              console.log('🟢 signInWithGoogle 함수 호출 시작...');
 
-              // 리다이렉트 방식 - 페이지가 이동하므로 onSuccess 호출 불필요
+              // 팝업 방식으로 즉시 결과 반환
               await signInWithGoogle();
+
+              console.log('🟢 Google 로그인 성공! 모달 닫기...');
+
+              // 로그인 성공 시 모달 닫기
+              onSuccess({
+                email: '',
+                name: ''
+              });
             } catch (err: any) {
+              console.error('🔴 Google 로그인 에러:', err);
               if (err.message) {
                 setError(err.message);
               }

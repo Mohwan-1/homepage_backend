@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DataTable, { ColumnDef, TableAction } from '@/components/admin/data-table';
 import { Search, Calendar } from 'lucide-react';
+import { collection, getDocs, query, orderBy, updateDoc, doc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 type OrderStatus =
   | 'pending'
@@ -23,63 +25,6 @@ interface OrderData {
   items: number;
 }
 
-const mockOrders: OrderData[] = [
-  {
-    id: '1',
-    orderNumber: 'ORD-20240115-001',
-    customerName: '김철수',
-    orderDate: '2024-01-15',
-    status: 'shipping',
-    amount: 125000,
-    items: 2
-  },
-  {
-    id: '2',
-    orderNumber: 'ORD-20240115-002',
-    customerName: '이영희',
-    orderDate: '2024-01-15',
-    status: 'paid',
-    amount: 89000,
-    items: 1
-  },
-  {
-    id: '3',
-    orderNumber: 'ORD-20240114-003',
-    customerName: '박민수',
-    orderDate: '2024-01-14',
-    status: 'delivered',
-    amount: 256000,
-    items: 3
-  },
-  {
-    id: '4',
-    orderNumber: 'ORD-20240114-004',
-    customerName: '정수진',
-    orderDate: '2024-01-14',
-    status: 'preparing',
-    amount: 45000,
-    items: 1
-  },
-  {
-    id: '5',
-    orderNumber: 'ORD-20240113-005',
-    customerName: '최지훈',
-    orderDate: '2024-01-13',
-    status: 'cancelled',
-    amount: 178000,
-    items: 2
-  },
-  {
-    id: '6',
-    orderNumber: 'ORD-20240113-006',
-    customerName: '강민지',
-    orderDate: '2024-01-13',
-    status: 'pending',
-    amount: 92000,
-    items: 1
-  },
-];
-
 const statusConfig = {
   pending: { label: '결제대기', color: 'bg-gray-100 text-gray-600' },
   paid: { label: '결제완료', color: 'bg-green-100 text-green-600' },
@@ -91,11 +36,45 @@ const statusConfig = {
 };
 
 export default function OrdersPage() {
-  const [orders, setOrders] = useState<OrderData[]>(mockOrders);
+  const [orders, setOrders] = useState<OrderData[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | OrderStatus>('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+
+  useEffect(() => {
+    loadOrders();
+  }, []);
+
+  const loadOrders = async () => {
+    try {
+      setLoading(true);
+      const ordersQuery = query(
+        collection(db, 'orders'),
+        orderBy('createdAt', 'desc')
+      );
+      const querySnapshot = await getDocs(ordersQuery);
+      const ordersData: OrderData[] = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          orderNumber: data.orderId || doc.id,
+          customerName: data.customerName || data.userName || 'Unknown',
+          orderDate: data.createdAt ? new Date(data.createdAt).toLocaleDateString('ko-KR') : '-',
+          status: data.status || 'pending',
+          amount: data.totalAmount || 0,
+          items: data.items?.length || 0
+        };
+      });
+      setOrders(ordersData);
+    } catch (error) {
+      console.error('Failed to load orders:', error);
+      alert('주문 목록을 불러오는데 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredOrders = orders.filter(order => {
     const matchesSearch =
@@ -154,30 +133,49 @@ export default function OrdersPage() {
     },
   ];
 
-  const changeOrderStatus = (order: OrderData, newStatus: OrderStatus) => {
-    setOrders(orders.map(o =>
-      o.id === order.id ? { ...o, status: newStatus } : o
-    ));
+  const changeOrderStatus = async (order: OrderData, newStatus: OrderStatus) => {
+    try {
+      await updateDoc(doc(db, 'orders', order.id), {
+        status: newStatus,
+        updatedAt: new Date().toISOString()
+      });
+      await loadOrders();
+      alert(`주문 상태가 ${statusConfig[newStatus].label}(으)로 변경되었습니다.`);
+    } catch (error) {
+      console.error('Failed to update order status:', error);
+      alert('주문 상태 변경에 실패했습니다.');
+    }
   };
 
   const actions: TableAction<OrderData>[] = [
     {
       label: '상세보기',
-      onClick: (order) => alert(`${order.orderNumber} 상세 정보`),
+      onClick: (order) => alert(`주문번호: ${order.orderNumber}\n고객: ${order.customerName}\n상품수: ${order.items}개\n금액: ₩${order.amount.toLocaleString()}\n상태: ${statusConfig[order.status].label}`),
     },
     {
       label: '상태변경',
       onClick: (order) => {
         const statusOptions: OrderStatus[] = ['paid', 'preparing', 'shipping', 'delivered'];
         const currentIndex = statusOptions.indexOf(order.status);
-        if (currentIndex < statusOptions.length - 1) {
-          changeOrderStatus(order, statusOptions[currentIndex + 1]);
+        if (currentIndex < statusOptions.length - 1 && currentIndex >= 0) {
+          const nextStatus = statusOptions[currentIndex + 1];
+          if (confirm(`${order.orderNumber}의 상태를 ${statusConfig[nextStatus].label}(으)로 변경하시겠습니까?`)) {
+            changeOrderStatus(order, nextStatus);
+          }
+        } else if (order.status === 'delivered') {
+          alert('이미 배송 완료된 주문입니다.');
+        } else {
+          alert('이 주문의 상태를 변경할 수 없습니다.');
         }
       },
     },
     {
       label: '취소',
       onClick: (order) => {
+        if (order.status === 'delivered') {
+          alert('배송 완료된 주문은 취소할 수 없습니다. 환불 처리를 진행하세요.');
+          return;
+        }
         if (confirm(`${order.orderNumber}을(를) 취소하시겠습니까?`)) {
           changeOrderStatus(order, 'cancelled');
         }
@@ -185,6 +183,17 @@ export default function OrdersPage() {
       variant: 'destructive',
     },
   ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">주문 목록 로딩 중...</p>
+        </div>
+      </div>
+    );
+  }
 
   const totalRevenue = filteredOrders
     .filter(o => o.status !== 'cancelled' && o.status !== 'refunded')

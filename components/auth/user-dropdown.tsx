@@ -37,21 +37,22 @@ export default function UserDropdown({ userName, onLogout }: UserDropdownProps) 
       {isOpen && (
         <div className="absolute right-0 mt-2 w-48 backdrop-blur-xl bg-white/95 border border-white/20 shadow-xl rounded-lg overflow-hidden animate-fade-in">
           <Link
-            href="/profile"
+            href="/mypage"
             className="flex items-center space-x-3 px-4 py-3 text-gray-900 hover:bg-white/40 transition-colors"
             onClick={() => setIsOpen(false)}
           >
             <User size={18} />
-            <span>내 프로필</span>
+            <span>마이페이지</span>
           </Link>
-          <Link
-            href="/settings"
+          {/* 설정 메뉴 숨김 - 마이페이지와 동일 */}
+          {/* <Link
+            href="/mypage/profile"
             className="flex items-center space-x-3 px-4 py-3 text-gray-900 hover:bg-white/40 transition-colors"
             onClick={() => setIsOpen(false)}
           >
             <Settings size={18} />
             <span>설정</span>
-          </Link>
+          </Link> */}
           <div className="h-px bg-gray-200 my-1"></div>
           <button
             onClick={() => {

@@ -98,21 +98,35 @@ export default function Header() {
           {/* Right: Auth Buttons or User Dropdown */}
           <div className="hidden md:flex items-center space-x-4">
             {user ? (
-              <UserDropdown userName={userData?.name || user.email || '사용자'} onLogout={handleLogout} />
+              <>
+                {userData?.role === 'admin' && (
+                  <Link
+                    href="/admin"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                  >
+                    관리자페이지
+                  </Link>
+                )}
+                <UserDropdown userName={userData?.name || user.email || '사용자'} onLogout={handleLogout} />
+              </>
             ) : (
               <>
                 <button
-                  onClick={() => setIsLoginModalOpen(true)}
+                  onClick={() => {
+                    console.log('🔷 로그인 버튼 클릭 - 모달 열기');
+                    setIsLoginModalOpen(true);
+                  }}
                   className="text-gray-700 hover:text-blue-600 font-medium transition-colors"
                 >
                   로그인
                 </button>
-                <button
+                {/* 회원가입 버튼 숨김 - 로그인 모달 하단에서 접근 가능 */}
+                {/* <button
                   onClick={() => setIsSignupModalOpen(true)}
                   className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 text-gray-900 px-4 py-2 rounded-lg font-medium transition-all"
                 >
                   회원가입
-                </button>
+                </button> */}
               </>
             )}
           </div>
@@ -154,6 +168,15 @@ export default function Header() {
                   <div className="px-4 py-2 text-gray-900 font-medium">
                     {userData?.name || user.email}
                   </div>
+                  {userData?.role === 'admin' && (
+                    <Link
+                      href="/admin"
+                      className="block px-4 py-3 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors duration-200 text-center"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      관리자페이지
+                    </Link>
+                  )}
                   <Link
                     href="/mypage"
                     className="block px-4 py-3 rounded-lg font-medium text-gray-900 hover:text-blue-600 hover:bg-white/40 transition-colors duration-200"
@@ -189,7 +212,8 @@ export default function Header() {
                   >
                     로그인
                   </button>
-                  <button
+                  {/* 모바일 회원가입 버튼 숨김 - 로그인 모달 하단에서 접근 가능 */}
+                  {/* <button
                     onClick={() => {
                       setIsSignupModalOpen(true);
                       setIsMenuOpen(false);
@@ -197,7 +221,7 @@ export default function Header() {
                     className="block w-full px-4 py-3 rounded-lg font-medium bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 text-gray-900 transition-all text-center"
                   >
                     회원가입
-                  </button>
+                  </button> */}
                 </>
               )}
             </div>

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart3, Users, Package, ShoppingCart, Settings } from 'lucide-react';
+import { BarChart3, Users, Package, ShoppingCart, Settings, MessageSquare } from 'lucide-react';
 
 interface MenuItem {
   title: string;
@@ -30,6 +30,11 @@ const adminMenuItems: MenuItem[] = [
     title: '주문 관리',
     href: '/admin/orders',
     icon: ShoppingCart
+  },
+  {
+    title: '후기 관리',
+    href: '/admin/reviews',
+    icon: MessageSquare
   },
   {
     title: '시스템 설정',

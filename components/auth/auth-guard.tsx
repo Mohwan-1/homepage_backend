@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/auth-context';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -10,40 +11,23 @@ interface AuthGuardProps {
 
 export default function AuthGuard({ children, redirectTo = '/' }: AuthGuardProps) {
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const { user, loading } = useAuth();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        // TODO: Firebase 인증 연동
-        // const user = auth.currentUser;
-        // if (!user) {
-        //   router.push(redirectTo);
-        //   return;
-        // }
+    console.log('🛡️ AuthGuard - Auth State:', {
+      loading,
+      hasUser: !!user,
+      userEmail: user?.email
+    });
 
-        // 임시 데모 로직 - localStorage에서 사용자 정보 확인
-        const userDataStr = localStorage.getItem('userData');
-        if (!userDataStr) {
-          alert('로그인이 필요합니다.');
-          router.push(redirectTo);
-          return;
-        }
+    if (!loading && !user) {
+      console.log('🚫 AuthGuard - No user, redirecting to:', redirectTo);
+      alert('로그인이 필요합니다.');
+      router.push(redirectTo);
+    }
+  }, [user, loading, router, redirectTo]);
 
-        setIsAuthenticated(true);
-      } catch (error) {
-        console.error('Auth check failed:', error);
-        router.push(redirectTo);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkAuth();
-  }, [router, redirectTo]);
-
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -54,7 +38,7 @@ export default function AuthGuard({ children, redirectTo = '/' }: AuthGuardProps
     );
   }
 
-  if (!isAuthenticated) {
+  if (!user) {
     return null;
   }
 

@@ -21,7 +21,9 @@
       "Bash(mkdir:*)",
       "Bash(node:*)",
       "Bash(vercel:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(cat:*)",
+      "Bash(if exist .next rmdir /s /q .next)"
     ],
     "deny": [],
     "ask": []

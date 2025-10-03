@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DataTable, { ColumnDef, TableAction } from '@/components/admin/data-table';
 import { Search, Filter, UserPlus } from 'lucide-react';
+import { collection, getDocs, query, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 interface UserTableData {
   id: string;
@@ -14,59 +16,45 @@ interface UserTableData {
   lastLoginAt?: string;
 }
 
-const mockUsers: UserTableData[] = [
-  {
-    id: '1',
-    name: '김철수',
-    email: 'kim@example.com',
-    role: 'user',
-    status: 'active',
-    createdAt: '2024-01-15',
-    lastLoginAt: '2024-01-20'
-  },
-  {
-    id: '2',
-    name: '이영희',
-    email: 'lee@example.com',
-    role: 'admin',
-    status: 'active',
-    createdAt: '2024-01-10',
-    lastLoginAt: '2024-01-20'
-  },
-  {
-    id: '3',
-    name: '박민수',
-    email: 'park@example.com',
-    role: 'user',
-    status: 'inactive',
-    createdAt: '2024-01-05',
-    lastLoginAt: '2024-01-15'
-  },
-  {
-    id: '4',
-    name: '정수진',
-    email: 'jung@example.com',
-    role: 'user',
-    status: 'suspended',
-    createdAt: '2023-12-20',
-    lastLoginAt: '2024-01-10'
-  },
-  {
-    id: '5',
-    name: '최지훈',
-    email: 'choi@example.com',
-    role: 'user',
-    status: 'active',
-    createdAt: '2023-12-15',
-    lastLoginAt: '2024-01-19'
-  },
-];
-
 export default function UsersPage() {
-  const [users, setUsers] = useState<UserTableData[]>(mockUsers);
+  const [users, setUsers] = useState<UserTableData[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<'all' | 'user' | 'admin'>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive' | 'suspended'>('all');
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const loadUsers = async () => {
+    try {
+      setLoading(true);
+      const usersQuery = query(
+        collection(db, 'users'),
+        orderBy('createdAt', 'desc')
+      );
+      const querySnapshot = await getDocs(usersQuery);
+      const usersData: UserTableData[] = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          name: data.name || 'Unknown',
+          email: data.email || '',
+          role: data.role || 'user',
+          status: data.status || 'active',
+          createdAt: new Date(data.createdAt).toLocaleDateString('ko-KR'),
+          lastLoginAt: data.lastLoginAt ? new Date(data.lastLoginAt).toLocaleDateString('ko-KR') : undefined
+        };
+      });
+      setUsers(usersData);
+    } catch (error) {
+      console.error('Failed to load users:', error);
+      alert('사용자 목록을 불러오는데 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredUsers = users.filter(user => {
     const matchesSearch =
@@ -133,25 +121,59 @@ export default function UsersPage() {
     },
   ];
 
+  const deleteUser = async (userId: string) => {
+    try {
+      await deleteDoc(doc(db, 'users', userId));
+      await loadUsers();
+      alert('사용자가 삭제되었습니다.');
+    } catch (error) {
+      console.error('Failed to delete user:', error);
+      alert('사용자 삭제에 실패했습니다.');
+    }
+  };
+
   const actions: TableAction<UserTableData>[] = [
     {
       label: '상세보기',
-      onClick: (user) => alert(`${user.name}님의 상세 정보`),
+      onClick: (user) => alert(`${user.name}님의 상세 정보 (Firebase UID: ${user.id})`),
     },
     {
-      label: '수정',
-      onClick: (user) => alert(`${user.name}님 정보 수정`),
+      label: '역할변경',
+      onClick: async (user) => {
+        const newRole = user.role === 'admin' ? 'user' : 'admin';
+        if (confirm(`${user.name}님의 역할을 ${newRole === 'admin' ? '관리자' : '사용자'}로 변경하시겠습니까?`)) {
+          try {
+            await updateDoc(doc(db, 'users', user.id), { role: newRole });
+            await loadUsers();
+            alert('역할이 변경되었습니다.');
+          } catch (error) {
+            console.error('Failed to update role:', error);
+            alert('역할 변경에 실패했습니다.');
+          }
+        }
+      },
     },
     {
       label: '삭제',
       onClick: (user) => {
-        if (confirm(`${user.name}님을 삭제하시겠습니까?`)) {
-          setUsers(users.filter(u => u.id !== user.id));
+        if (confirm(`${user.name}님을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) {
+          deleteUser(user.id);
         }
       },
       variant: 'destructive',
     },
   ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">사용자 목록 로딩 중...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

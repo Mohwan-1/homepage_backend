@@ -9,7 +9,7 @@ import {
   onAuthStateChanged,
   updateProfile,
   GoogleAuthProvider,
-  signInWithRedirect,
+  signInWithPopup,
   getRedirectResult,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
@@ -41,54 +41,94 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 리다이렉트 결과 처리
-    const handleRedirectResult = async () => {
-      try {
-        const result = await getRedirectResult(auth);
-        if (result?.user) {
-          const user = result.user;
+    let mounted = true;
+    let unsubscribe: (() => void) | undefined;
 
-          // Firestore에 사용자 데이터가 있는지 확인
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
+    const initAuth = async () => {
+      // Auth 상태 변경 리스너 먼저 등록 (중요!)
+      unsubscribe = onAuthStateChanged(auth, async (user) => {
+        console.log('🔔 Auth state changed:', user?.email || '로그아웃 상태');
+
+        if (!mounted) return;
+
+        if (user) {
+          console.log('👤 Firebase Auth 사용자:', user.uid);
+          setUser(user);
+
+          // Firestore에서 사용자 데이터 가져오기
+          try {
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+
+            if (userDoc.exists()) {
+              const data = userDoc.data() as UserData;
+              console.log('✅ Firestore 사용자 데이터 로드:', data);
+              setUserData(data);
+            } else {
+              console.warn('⚠️ Firestore에 사용자 데이터 없음 - 생성 중...');
+              // Google 로그인 직후일 수 있으므로 기본 데이터 생성
+              const defaultData: UserData = {
+                uid: user.uid,
+                email: user.email!,
+                name: user.displayName || user.email!.split('@')[0],
+                role: 'user',
+                createdAt: new Date().toISOString(),
+              };
+
+              await setDoc(doc(db, 'users', user.uid), defaultData);
+              console.log('📝 Firestore 사용자 데이터 생성 완료:', defaultData);
+              setUserData(defaultData);
+            }
+          } catch (error) {
+            console.error('❌ Firestore 데이터 로드 실패:', error);
+          }
+        } else {
+          console.log('🚪 로그아웃 상태');
+          setUser(null);
+          setUserData(null);
+        }
+
+        setLoading(false);
+      });
+
+      // 리다이렉트 결과 확인 (비동기로 별도 처리)
+      try {
+        console.log('🔄 Google 리다이렉트 결과 확인 중...');
+        const result = await getRedirectResult(auth);
+
+        if (result?.user) {
+          console.log('✅ Google 로그인 리다이렉트 성공:', result.user.email);
+
+          // Firestore에 데이터가 없으면 생성 (onAuthStateChanged에서도 처리되지만 중복 방지)
+          const userDoc = await getDoc(doc(db, 'users', result.user.uid));
 
           if (!userDoc.exists()) {
-            // 신규 사용자인 경우 Firestore에 데이터 저장
             const newUserData: UserData = {
-              uid: user.uid,
-              email: user.email!,
-              name: user.displayName || user.email!.split('@')[0],
+              uid: result.user.uid,
+              email: result.user.email!,
+              name: result.user.displayName || result.user.email!.split('@')[0],
               role: 'user',
               createdAt: new Date().toISOString(),
             };
 
-            await setDoc(doc(db, 'users', user.uid), newUserData);
-            setUserData(newUserData);
+            console.log('📝 Google 신규 사용자 Firestore 저장:', newUserData);
+            await setDoc(doc(db, 'users', result.user.uid), newUserData);
           }
+        } else {
+          console.log('ℹ️ 리다이렉트 결과 없음 (일반 페이지 로드)');
         }
-      } catch (error) {
-        console.error('Redirect result error:', error);
+      } catch (error: any) {
+        console.error('❌ Redirect result error:', error);
       }
     };
 
-    handleRedirectResult();
+    initAuth();
 
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
-
-      if (user) {
-        // Firestore에서 사용자 데이터 가져오기
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          setUserData(userDoc.data() as UserData);
-        }
-      } else {
-        setUserData(null);
+    return () => {
+      mounted = false;
+      if (unsubscribe) {
+        unsubscribe();
       }
-
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
@@ -127,16 +167,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
+      console.log('🔵 Google 로그인 시작...');
+
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({
         prompt: 'select_account'
       });
 
-      // 리다이렉트 방식으로 변경 (팝업 문제 해결)
-      await signInWithRedirect(auth, provider);
-      // 리다이렉트 후 자동으로 돌아오며, useEffect에서 처리됨
+      console.log('🔵 Provider 설정 완료, 팝업 방식으로 로그인...');
+
+      // 팝업 방식으로 변경 (localhost에서 더 안정적)
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      console.log('✅ Google 로그인 성공:', user.email);
+
+      // Firestore에 사용자 데이터 저장
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+
+      if (!userDoc.exists()) {
+        const newUserData: UserData = {
+          uid: user.uid,
+          email: user.email!,
+          name: user.displayName || user.email!.split('@')[0],
+          role: 'user',
+          createdAt: new Date().toISOString(),
+        };
+
+        console.log('📝 신규 사용자 Firestore 저장:', newUserData);
+        await setDoc(doc(db, 'users', user.uid), newUserData);
+        setUserData(newUserData);
+      } else {
+        const existingData = userDoc.data() as UserData;
+        console.log('📂 기존 사용자 데이터 로드:', existingData);
+        setUserData(existingData);
+      }
+
+      console.log('🎉 Google 로그인 완료!');
     } catch (error: any) {
-      console.error('Google sign in error:', error);
+      console.error('❌ Google sign in error:', error);
+      console.error('❌ Error code:', error.code);
+      console.error('❌ Error message:', error.message);
       throw new Error(getErrorMessage(error.code));
     }
   };

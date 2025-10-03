@@ -14,8 +14,22 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
+// Firebase 설정 디버깅
+console.log('🔥 Firebase Config:', {
+  apiKey: firebaseConfig.apiKey ? '✅ 설정됨' : '❌ 없음',
+  authDomain: firebaseConfig.authDomain,
+  projectId: firebaseConfig.projectId,
+  configured: !!firebaseConfig.apiKey && !!firebaseConfig.authDomain
+});
+
 // Initialize Firebase (singleton pattern)
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+
+if (getApps().length === 0) {
+  console.error('❌ Firebase 초기화 실패!');
+} else {
+  console.log('✅ Firebase 초기화 성공');
+}
 
 // Initialize Firebase services
 export const auth = getAuth(app);

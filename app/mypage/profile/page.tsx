@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Camera, MapPin, Plus, Trash2, ArrowLeft, Home } from 'lucide-react';
+import { Camera, MapPin, Plus, Trash2, ArrowLeft, Home, Settings, User } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, addDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';

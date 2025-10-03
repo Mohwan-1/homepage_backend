@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/auth-context';
 
 interface AdminGuardProps {
   children: React.ReactNode;
@@ -9,51 +10,46 @@ interface AdminGuardProps {
 
 export default function AdminGuard({ children }: AdminGuardProps) {
   const router = useRouter();
+  const { user, userData, loading } = useAuth();
   const [isAuthorized, setIsAuthorized] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const checkAdminAccess = async () => {
-      try {
-        // TODO: Firebase 인증 연동
-        // const user = auth.currentUser;
-        // if (!user) {
-        //   router.push('/');
-        //   return;
-        // }
+    // 로딩 중이면 아무것도 하지 않음
+    if (loading) {
+      console.log('AdminGuard: 로딩 중...');
+      return;
+    }
 
-        // const tokenResult = await user.getIdTokenResult();
-        // const isAdmin = tokenResult.claims.role === 'admin';
+    console.log('AdminGuard 체크:', { user: user?.email, userData, loading });
 
-        // 임시 데모 로직 - localStorage에서 사용자 정보 확인
-        const userDataStr = localStorage.getItem('userData');
-        if (!userDataStr) {
-          router.push('/');
-          return;
-        }
+    // 로그인하지 않은 경우
+    if (!user) {
+      console.log('AdminGuard: 로그인 필요');
+      alert('로그인이 필요합니다.');
+      router.push('/');
+      return;
+    }
 
-        const userData = JSON.parse(userDataStr);
-        const isAdmin = userData.role === 'admin';
+    // userData가 로드되지 않은 경우 (로딩 완료 후에도)
+    if (!userData) {
+      console.log('AdminGuard: userData 없음, 잠시 대기...');
+      return;
+    }
 
-        if (!isAdmin) {
-          alert('관리자 권한이 필요합니다.');
-          router.push('/');
-          return;
-        }
+    // 관리자가 아닌 경우
+    if (userData.role !== 'admin') {
+      console.log('AdminGuard: 관리자 권한 없음', userData.role);
+      alert('관리자 권한이 필요합니다.');
+      router.push('/');
+      return;
+    }
 
-        setIsAuthorized(true);
-      } catch (error) {
-        console.error('Admin access check failed:', error);
-        router.push('/');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    console.log('AdminGuard: 관리자 권한 확인 완료', userData);
+    setIsAuthorized(true);
+  }, [user, userData, loading, router]);
 
-    checkAdminAccess();
-  }, [router]);
-
-  if (isLoading) {
+  // 로딩 중이거나 userData 로딩 대기 중
+  if (loading || (user && !userData)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <div className="text-center">

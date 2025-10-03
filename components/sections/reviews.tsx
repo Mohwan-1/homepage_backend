@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { useAuth } from '@/contexts/auth-context';
 
 interface Review {
   id: string;
@@ -18,9 +20,20 @@ interface Review {
 }
 
 export default function Reviews() {
+  const router = useRouter();
+  const { user } = useAuth();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+
+  const handleWriteReview = () => {
+    if (!user) {
+      alert('후기 작성은 로그인 후 이용하실 수 있습니다.\n로그인 페이지로 이동하시겠습니까?');
+      // 로그인 모달을 열거나 로그인 페이지로 이동하는 로직은 헤더에서 처리됨
+      return;
+    }
+    router.push('/reviews/write');
+  };
 
   useEffect(() => {
     loadReviews();
@@ -124,19 +137,22 @@ export default function Reviews() {
               {reviews.map((review) => (
                 <div key={review.id} className="w-full md:w-1/3 flex-shrink-0 px-3">
                   <div className="bg-white border border-gray-200 rounded-lg p-6 h-full">
-                    {/* Rating */}
-                    <div className="flex items-center gap-1 mb-3">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          size={18}
-                          className={
-                            star <= review.rating
-                              ? 'fill-yellow-400 text-yellow-400'
-                              : 'text-gray-300'
-                          }
-                        />
-                      ))}
+                    {/* Rating and Author */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            size={18}
+                            className={
+                              star <= review.rating
+                                ? 'fill-yellow-400 text-yellow-400'
+                                : 'text-gray-300'
+                            }
+                          />
+                        ))}
+                      </div>
+                      <span className="text-sm text-gray-600 font-medium">{review.name}</span>
                     </div>
 
                     {/* Title */}
@@ -161,14 +177,9 @@ export default function Reviews() {
                       <img
                         src={review.files[0]}
                         alt="Review"
-                        className="w-full h-40 object-cover rounded-lg mb-4 border border-gray-200"
+                        className="w-full h-40 object-cover rounded-lg border border-gray-200"
                       />
                     )}
-
-                    {/* Author */}
-                    <div className="pt-4 border-t border-gray-200">
-                      <p className="text-sm text-gray-600 font-medium">{review.name}</p>
-                    </div>
                   </div>
                 </div>
               ))}
@@ -194,14 +205,14 @@ export default function Reviews() {
           )}
         </div>
 
-        {/* View All Button */}
+        {/* Write Review Button */}
         <div className="text-center mt-12">
-          <Link
-            href="/reviews"
+          <button
+            onClick={handleWriteReview}
             className="inline-block bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
           >
-            모든 후기 보기
-          </Link>
+            후기 작성
+          </button>
         </div>
       </div>
     </section>
