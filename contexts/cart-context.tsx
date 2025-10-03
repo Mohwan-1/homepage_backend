@@ -39,15 +39,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [items]);
 
   const addItem = (item: Omit<CartItem, 'quantity'>) => {
-    setItems((prev) => {
-      const existingItem = prev.find((i) => i.id === item.id);
-      if (existingItem) {
-        return prev.map((i) =>
-          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
-        );
-      }
-      return [...prev, { ...item, quantity: 1 }];
-    });
+    // 교육상품: 항상 마지막 선택 상품으로 대체 (수량 누적 없음)
+    console.log('🛒 상품 선택:', item.name, '- 기존 장바구니 교체');
+    setItems([{ ...item, quantity: 1 }]);
   };
 
   const removeItem = (id: string) => {
