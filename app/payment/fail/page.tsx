@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { XCircle } from 'lucide-react';
 
@@ -11,6 +11,23 @@ function PaymentFailContent() {
   const errorCode = searchParams.get('code');
   const errorMessage = searchParams.get('message');
   const orderId = searchParams.get('orderId');
+
+  useEffect(() => {
+    // 결제 실패 시 해당 주문 정보 삭제
+    if (orderId) {
+      console.log('❌ 결제 실패 - 주문 정보 삭제:', orderId);
+      localStorage.removeItem(`order_${orderId}`);
+    }
+
+    // 장바구니 초기화 (결제 실패 시 다시 선택하도록)
+    console.log('🧹 결제 실패 - 장바구니 초기화');
+    localStorage.removeItem('cart');
+  }, [orderId]);
+
+  const handleRetry = () => {
+    // 상품 페이지로 이동 (새로 선택하도록)
+    router.push('/products');
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
@@ -36,21 +53,21 @@ function PaymentFailContent() {
 
         <div className="space-y-3">
           <button
-            onClick={() => router.push('/checkout')}
+            onClick={handleRetry}
             className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
           >
             다시 시도하기
           </button>
           <button
-            onClick={() => router.push('/products')}
+            onClick={() => router.push('/')}
             className="w-full bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium"
           >
-            상품 페이지로 돌아가기
+            홈으로 돌아가기
           </button>
         </div>
 
         <p className="text-xs text-gray-500 mt-6">
-          문제가 계속되면 고객센터로 문의해주세요.
+          장바구니가 초기화되었습니다. 상품을 다시 선택해주세요.
         </p>
       </div>
     </div>
