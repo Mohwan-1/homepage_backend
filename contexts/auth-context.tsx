@@ -208,6 +208,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('❌ Google sign in error:', error);
       console.error('❌ Error code:', error.code);
       console.error('❌ Error message:', error.message);
+
+      // 인증 도메인 오류 처리
+      if (error.code === 'auth/unauthorized-domain') {
+        throw new Error('인증 오류가 발생했습니다. Firebase 설정에서 현재 도메인을 승인된 도메인에 추가해주세요.');
+      }
+
       throw new Error(getErrorMessage(error.code));
     }
   };
