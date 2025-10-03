@@ -16,6 +16,7 @@ function PaymentSuccessContent() {
   const [isProcessing, setIsProcessing] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [waitingForUser, setWaitingForUser] = useState(false);
+  const [processed, setProcessed] = useState(false);
 
   useEffect(() => {
     const processPayment = async () => {
@@ -29,6 +30,12 @@ function PaymentSuccessContent() {
         return;
       }
 
+      // 이미 처리된 주문인지 확인 (중복 방지)
+      if (processed) {
+        console.log('⚠️ 이미 처리된 주문입니다. 중복 실행 방지');
+        return;
+      }
+
       // user가 로드될 때까지 대기
       if (!user) {
         console.log('⏳ 사용자 정보 로딩 대기 중...');
@@ -38,6 +45,9 @@ function PaymentSuccessContent() {
 
       setWaitingForUser(false);
       console.log('✅ 사용자 정보 로드 완료:', user.email);
+
+      // 처리 시작 플래그 설정
+      setProcessed(true);
 
       try {
         console.log('🔄 결제 승인 처리 시작:', { paymentKey, orderId, amount });
@@ -111,7 +121,7 @@ function PaymentSuccessContent() {
     };
 
     processPayment();
-  }, [searchParams, router, user, clearCart]);
+  }, [searchParams, router, user, processed]); // clearCart 제거하여 무한 루프 방지
 
   if (error) {
     return (
