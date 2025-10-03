@@ -168,6 +168,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithGoogle = async () => {
     try {
       console.log('🔵 Google 로그인 시작...');
+      console.log('🌐 현재 도메인:', typeof window !== 'undefined' ? window.location.hostname : 'SSR');
 
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({
@@ -208,10 +209,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('❌ Google sign in error:', error);
       console.error('❌ Error code:', error.code);
       console.error('❌ Error message:', error.message);
+      console.error('❌ Full error:', JSON.stringify(error, null, 2));
 
       // 인증 도메인 오류 처리
       if (error.code === 'auth/unauthorized-domain') {
-        throw new Error('인증 오류가 발생했습니다. Firebase 설정에서 현재 도메인을 승인된 도메인에 추가해주세요.');
+        const currentDomain = typeof window !== 'undefined' ? window.location.hostname : 'unknown';
+        throw new Error(`인증 오류: 현재 도메인 "${currentDomain}"이 Firebase 승인된 도메인에 없습니다.\n\nFirebase Console > Authentication > Settings > Authorized domains에서\n"${currentDomain}"을 추가해주세요.`);
+      }
+
+      // 팝업 차단 오류
+      if (error.code === 'auth/popup-blocked') {
+        throw new Error('팝업이 차단되었습니다. 브라우저의 팝업 차단을 해제해주세요.');
+      }
+
+      // 팝업 닫힘
+      if (error.code === 'auth/popup-closed-by-user') {
+        throw new Error('로그인이 취소되었습니다.');
       }
 
       throw new Error(getErrorMessage(error.code));
