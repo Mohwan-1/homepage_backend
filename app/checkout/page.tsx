@@ -25,8 +25,8 @@ export default function CheckoutPage() {
   useEffect(() => {
     // 로그인 체크
     if (!user) {
-      alert('결제는 로그인 후 이용하실 수 있습니다.\n로그인 페이지로 이동합니다.');
-      router.push('/login');
+      alert('결제는 로그인 후 이용하실 수 있습니다.\n홈페이지에서 로그인해주세요.');
+      router.push('/');
       return;
     }
 
