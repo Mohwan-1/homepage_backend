@@ -3,10 +3,14 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CheckCircle } from 'lucide-react';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { useAuth } from '@/contexts/auth-context';
 
 function PaymentSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user } = useAuth();
   const [isProcessing, setIsProcessing] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,42 +26,82 @@ function PaymentSuccessContent() {
         return;
       }
 
-      try {
-        // TODO: 서버에서 결제 승인 처리
-        // const response = await fetch('/api/payments/confirm', {
-        //   method: 'POST',
-        //   headers: { 'Content-Type': 'application/json' },
-        //   body: JSON.stringify({ paymentKey, orderId, amount }),
-        // });
+      if (!user) {
+        setError('로그인 정보를 찾을 수 없습니다.');
+        setIsProcessing(false);
+        return;
+      }
 
-        // 임시: 로컬스토리지에서 주문 정보 업데이트
+      try {
+        console.log('🔄 결제 승인 처리 시작:', { paymentKey, orderId, amount });
+
+        // 로컬스토리지에서 주문 정보 가져오기
         const orderDataStr = localStorage.getItem(`order_${orderId}`);
-        if (orderDataStr) {
-          const orderData = JSON.parse(orderDataStr);
-          orderData.status = 'paid';
-          orderData.paymentKey = paymentKey;
-          orderData.paidAt = new Date().toISOString();
-          localStorage.setItem(`order_${orderId}`, JSON.stringify(orderData));
+        if (!orderDataStr) {
+          throw new Error('주문 정보를 찾을 수 없습니다.');
         }
+
+        const orderData = JSON.parse(orderDataStr);
+        console.log('📦 주문 정보:', orderData);
+
+        // Firebase에 주문 정보 저장
+        const orderRef = await addDoc(collection(db, 'orders'), {
+          orderId: orderId,
+          userId: user.uid,
+          userEmail: user.email,
+          userName: orderData.orderInfo?.name || user.displayName || '고객',
+          userPhone: orderData.orderInfo?.phone || '',
+
+          // 배송 정보
+          shippingAddress: orderData.orderInfo?.address || '',
+          shippingDetailAddress: orderData.orderInfo?.detailAddress || '',
+          shippingZipCode: orderData.orderInfo?.zipCode || '',
+
+          // 주문 상품
+          items: orderData.items || [],
+          totalAmount: parseInt(amount),
+
+          // 결제 정보
+          paymentMethod: orderData.orderInfo?.paymentMethod || 'card',
+          paymentKey: paymentKey,
+          paymentStatus: 'paid',
+
+          // 주문 상태
+          status: 'paid',
+
+          // 타임스탬프
+          createdAt: serverTimestamp(),
+          paidAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+
+        console.log('✅ Firebase에 주문 저장 완료:', orderRef.id);
+
+        // 로컬스토리지 업데이트
+        orderData.status = 'paid';
+        orderData.paymentKey = paymentKey;
+        orderData.paidAt = new Date().toISOString();
+        orderData.firebaseId = orderRef.id;
+        localStorage.setItem(`order_${orderId}`, JSON.stringify(orderData));
 
         // 장바구니 비우기
         localStorage.removeItem('cart');
 
         setIsProcessing(false);
 
-        // 2초 후 홈으로 이동
+        // 3초 후 마이페이지로 이동
         setTimeout(() => {
-          router.push('/');
-        }, 2000);
-      } catch (err) {
-        console.error('Payment confirmation failed:', err);
-        setError('결제 승인에 실패했습니다.');
+          router.push('/mypage');
+        }, 3000);
+      } catch (err: any) {
+        console.error('❌ Payment confirmation failed:', err);
+        setError(err.message || '결제 승인에 실패했습니다.');
         setIsProcessing(false);
       }
     };
 
     processPayment();
-  }, [searchParams, router]);
+  }, [searchParams, router, user]);
 
   if (error) {
     return (
@@ -93,7 +137,8 @@ function PaymentSuccessContent() {
             <CheckCircle size={64} className="text-green-600 mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-gray-800 mb-2">결제 완료</h1>
             <p className="text-gray-600 mb-4">결제가 성공적으로 완료되었습니다.</p>
-            <p className="text-sm text-gray-500">홈으로 이동합니다...</p>
+            <p className="text-sm text-gray-500">주문 내역은 마이페이지에서 확인하실 수 있습니다.</p>
+            <p className="text-sm text-gray-500 mt-2">마이페이지로 이동합니다...</p>
           </>
         )}
       </div>

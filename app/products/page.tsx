@@ -30,7 +30,7 @@ export default function Products() {
       id: '1',
       name: '기본 패키지',
       description: '소규모 비즈니스를 위한 실용적인 솔루션',
-      price: 50000,
+      price: 100,
       features: ['기본 기능', '월 100건 처리', '이메일 지원', '99% 가동률'],
       category: '기본형',
     },
